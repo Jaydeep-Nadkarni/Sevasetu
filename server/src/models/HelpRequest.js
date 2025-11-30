@@ -117,6 +117,30 @@ const helpRequestSchema = new mongoose.Schema(
       ref: 'User',
     },
     verificationDate: Date,
+    visibility: {
+      type: String,
+      enum: ['public', 'ngo_only'],
+      default: 'public',
+      index: true,
+    },
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        text: {
+          type: String,
+          required: true,
+          maxlength: 1000,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     impact: {
       description: String,
       completionDate: Date,

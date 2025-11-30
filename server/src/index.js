@@ -1,11 +1,49 @@
 import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 import config from './config/config.js'
 import connectDB from './config/db.js'
 import authRoutes from './routes/authRoutes.js'
+import uploadRoutes from './routes/uploadRoutes.js'
+import donationRoutes from './routes/donationRoutes.js'
+import eventRoutes from './routes/eventRoutes.js'
+import attendanceRoutes from './routes/attendance.js'
+import helpRequestRoutes from './routes/helpRequestRoutes.js'
 
 const app = express()
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: {
+    origin: config.corsOrigin,
+    credentials: true,
+  },
+})
+
+// Store io instance in app for use in controllers
+app.set('io', io)
+
+// Socket.IO connection handling
+io.on('connection', socket => {
+  console.log(`📱 New client connected: ${socket.id}`)
+
+  // User joins their own room for personal notifications
+  socket.on('user:join', userId => {
+    socket.join(`user:${userId}`)
+    console.log(`✅ User ${userId} joined their notification room`)
+  })
+
+  // NGO joins their room
+  socket.on('ngo:join', ngoId => {
+    socket.join(`ngo:${ngoId}`)
+    console.log(`✅ NGO ${ngoId} joined their notification room`)
+  })
+
+  socket.on('disconnect', () => {
+    console.log(`❌ Client disconnected: ${socket.id}`)
+  })
+})
 
 // Middleware
 app.use(morgan('dev'))
@@ -32,6 +70,21 @@ app.get('/api/health', (req, res) => {
 // Auth routes
 app.use('/api/auth', authRoutes)
 
+// Upload routes
+app.use('/api/upload', uploadRoutes)
+
+// Donation routes
+app.use('/api/donations', donationRoutes)
+
+// Event routes
+app.use('/api/events', eventRoutes)
+
+// Attendance routes
+app.use('/api/attendance', attendanceRoutes)
+
+// Help Request routes
+app.use('/api/help-requests', helpRequestRoutes)
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack)
@@ -51,10 +104,11 @@ app.use((req, res) => {
 
 const PORT = config.port
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`\n🚀 Server running on port ${PORT}`)
   console.log(`📍 Environment: ${config.nodeEnv}`)
-  console.log(`🌐 CORS Origin: ${config.corsOrigin}\n`)
+  console.log(`🌐 CORS Origin: ${config.corsOrigin}`)
+  console.log(`🔌 WebSocket enabled for real-time notifications\n`)
 })
 
 export default app
