@@ -1,5 +1,5 @@
 import express from 'express'
-import { protect } from '../middleware/authMiddleware.js'
+import { protect } from '../middleware/auth.js'
 import { sendMessage, getChatHistory, clearChatHistory } from '../controllers/chatController.js'
 import rateLimit from 'express-rate-limit'
 

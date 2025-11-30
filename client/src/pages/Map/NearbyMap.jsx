@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { MapView } from '../../components/Map/MapView'
 import api from '../../utils/api'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 const NearbyMap = () => {
   const [activeTab, setActiveTab] = useState('ngos') // ngos, events, help-requests

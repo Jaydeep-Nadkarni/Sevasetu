@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import { showNotification } from '../../redux/slices/notificationSlice'
-import api from '../../api/axiosInstance'
+import { showNotification } from '../../store/slices/notificationSlice'
+import api from '../../utils/api'
 import { motion } from 'framer-motion'
 
 const DonationManagement = () => {

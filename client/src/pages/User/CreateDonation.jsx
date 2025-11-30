@@ -2,8 +2,8 @@ import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import ImageUpload from '../../components/ImageUpload'
-import { showNotification } from '../../redux/slices/notificationSlice'
-import api from '../../api/axiosInstance'
+import { showNotification } from '../../store/slices/notificationSlice'
+import api from '../../utils/api'
 import { motion } from 'framer-motion'
 
 const CreateDonation = () => {

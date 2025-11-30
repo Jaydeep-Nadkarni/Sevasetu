@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTheme } from '../../context/ThemeContext'
+import { useTheme } from '../context/ThemeContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 

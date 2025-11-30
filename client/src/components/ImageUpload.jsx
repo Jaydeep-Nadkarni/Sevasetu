@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useTheme } from '../../context/ThemeContext'
-import { Button } from './Button'
-import api from '../../utils/api'
+import { useTheme } from '../context/ThemeContext'
+import { Button } from './UI/Button'
+import api from '../utils/api'
 
 /**
  * ImageUpload Component

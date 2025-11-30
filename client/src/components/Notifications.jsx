@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { io } from 'socket.io-client'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useSelector, useDispatch } from 'react-redux'
+import { clearNotification } from '../store/slices/notificationSlice'
 import config from '../config/config'
 
 const Notifications = ({ userId, userType }) => {
@@ -8,6 +10,22 @@ const Notifications = ({ userId, userType }) => {
   const [socket, setSocket] = useState(null)
   const [connected, setConnected] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+
+  const dispatch = useDispatch()
+  const reduxNotification = useSelector(state => state.notification.notification)
+
+  // Handle Redux notifications
+  useEffect(() => {
+    if (reduxNotification) {
+      addNotification({
+        type: reduxNotification.type || 'info',
+        title: reduxNotification.type === 'error' ? 'Error' : 'Notification',
+        message: reduxNotification.message,
+        autoClose: true,
+      })
+      dispatch(clearNotification())
+    }
+  }, [reduxNotification, dispatch])
 
   // Initialize Socket.IO connection
   useEffect(() => {
