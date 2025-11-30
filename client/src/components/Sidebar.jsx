@@ -3,7 +3,9 @@ import { useTheme } from '../../context/ThemeContext'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
-const navItems = [
+import { useAuth } from '../hooks/useAuth'
+
+const userNavItems = [
   { label: 'Dashboard', path: '/dashboard', icon: '📊' },
   { label: 'Profile', path: '/profile', icon: '👤' },
   { label: 'Donations', path: '/donations', icon: '❤️' },
@@ -13,11 +15,36 @@ const navItems = [
   { label: 'Settings', path: '/settings', icon: '⚙️' },
 ]
 
+const ngoNavItems = [
+  { label: 'Dashboard', path: '/ngo/dashboard', icon: '📊' },
+  { label: 'Profile', path: '/ngo/profile', icon: '🏢' },
+  { label: 'Analytics', path: '/ngo/analytics', icon: '📈' },
+  { label: 'Donations', path: '/ngo/donations', icon: '💰' },
+  { label: 'Events', path: '/ngo/events', icon: '📅' },
+  { label: 'Help Requests', path: '/ngo/help-requests', icon: '🆘' },
+  { label: 'Settings', path: '/ngo/settings', icon: '⚙️' },
+]
+
+const adminNavItems = [
+  { label: 'Dashboard', path: '/admin/dashboard', icon: '📊' },
+  { label: 'NGO Verification', path: '/admin/ngo-verification', icon: '✅' },
+  { label: 'User Management', path: '/admin/users', icon: '👥' },
+  { label: 'Platform Analytics', path: '/admin/analytics', icon: '📈' },
+  { label: 'Donations', path: '/admin/donations', icon: '💰' },
+  { label: 'Certificates', path: '/admin/certificates', icon: '🏆' },
+  { label: 'Settings', path: '/admin/settings', icon: '⚙️' },
+]
+
 export const Sidebar = ({ isOpen = true, onClose }) => {
   const { isDark } = useTheme()
+  const { user } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+
+  let navItems = userNavItems
+  if (user?.role === 'ngo_admin') navItems = ngoNavItems
+  if (user?.role === 'admin') navItems = adminNavItems
 
   const handleNavigation = (path) => {
     navigate(path)
