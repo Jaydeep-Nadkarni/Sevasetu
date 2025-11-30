@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './Button'
 import NotificationCenter from '../Notifications/NotificationCenter'
+import LevelIndicator from '../LevelIndicator'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export const Navbar = ({ onMenuClick }) => {
@@ -82,16 +83,11 @@ export const Navbar = ({ onMenuClick }) => {
                 
                 <NotificationCenter />
                 
-                {/* Points Display */}
-                <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-indigo-50 border-indigo-100 dark:bg-gray-800 dark:border-gray-700 transition-colors">
-                  <span className="text-yellow-500">★</span>
-                  <span className="text-sm font-bold text-indigo-900 dark:text-gray-200">
-                    {user.points || 0}
-                  </span>
-                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-white text-indigo-600 dark:bg-gray-700 dark:text-gray-300">
-                    Lvl {user.level || 1}
-                  </span>
-                </div>
+                {/* Level Indicator with Real-time Updates */}
+                <LevelIndicator 
+                  initialLevel={user.level || 1}
+                  initialPoints={user.points || 0}
+                />
               </>
             )}
 

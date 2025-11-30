@@ -54,6 +54,53 @@ export const SocketProvider = ({ children }) => {
         });
       });
 
+      // Listen for activity events for real-time updates
+      newSocket.on('activity:new', (activity) => {
+        console.log('New activity:', activity);
+        toast('New activity recorded!', {
+          icon: '✨',
+          duration: 3000,
+          position: 'bottom-right'
+        });
+      });
+
+      newSocket.on('donation:created', (donation) => {
+        console.log('Donation created:', donation);
+      });
+
+      newSocket.on('event:joined', (eventData) => {
+        console.log('Event joined:', eventData);
+      });
+
+      newSocket.on('event:attended', (eventData) => {
+        console.log('Event attended:', eventData);
+      });
+
+      newSocket.on('certificate:earned', (certificate) => {
+        console.log('Certificate earned:', certificate);
+        toast('New certificate earned! 🏆', {
+          icon: '✨',
+          duration: 3000,
+          position: 'bottom-right'
+        });
+      });
+
+      newSocket.on('payment:completed', (payment) => {
+        console.log('Payment completed:', payment);
+      });
+
+      // Listen for gamification points updates
+      newSocket.on('points:earned', (data) => {
+        console.log('Points earned:', data);
+        if (data.levelUp) {
+          toast(`Level Up! 🎉 You reached ${data.newLevel}!`, {
+            icon: '⭐',
+            duration: 4000,
+            position: 'top-right'
+          });
+        }
+      });
+
       // Listen for specific events if needed
       newSocket.on('donation:accepted', (data) => {
           // These might be redundant if we use the generic 'notification' event
@@ -64,7 +111,17 @@ export const SocketProvider = ({ children }) => {
     }
 
     return () => {
-      if (newSocket) newSocket.disconnect();
+      if (newSocket) {
+        newSocket.off('notification');
+        newSocket.off('activity:new');
+        newSocket.off('donation:created');
+        newSocket.off('event:joined');
+        newSocket.off('event:attended');
+        newSocket.off('certificate:earned');
+        newSocket.off('payment:completed');
+        newSocket.off('points:earned');
+        newSocket.disconnect();
+      }
     };
   }, [user, token]);
 
@@ -104,3 +161,4 @@ export const SocketProvider = ({ children }) => {
     </SocketContext.Provider>
   );
 };
+

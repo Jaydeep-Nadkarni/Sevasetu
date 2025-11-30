@@ -105,6 +105,17 @@ function App() {
         />
 
         <Route
+          path="/user/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>

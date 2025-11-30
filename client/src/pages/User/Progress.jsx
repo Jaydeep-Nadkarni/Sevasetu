@@ -2,26 +2,62 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Trophy, Star, Award, TrendingUp, Clock, Target } from 'lucide-react'
 import api from '../../utils/api'
+import { useSocket } from '../../context/SocketContext'
 import { toast } from 'react-hot-toast'
 
 const Progress = () => {
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  const { socket } = useSocket()
+
+  const fetchProgress = async () => {
+    try {
+      const { data } = await api.get('/users/progress')
+      setStats(data.data)
+    } catch (error) {
+      console.error('Error fetching progress:', error)
+      toast.error('Failed to load progress')
+    }
+  }
 
   useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const { data } = await api.get('/users/progress')
-        setStats(data.data)
-      } catch (error) {
-        console.error('Error fetching progress:', error)
-        toast.error('Failed to load progress')
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchProgress()
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false))
   }, [])
+
+  // Listen for real-time points updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePointsEarned = (data) => {
+      console.log('Points earned event received:', data)
+      setStats((prev) => {
+        if (!prev) return prev
+        const updated = {
+          ...prev,
+          points: data.totalPoints,
+          progress: prev.progress || 0,
+          pointsToNext: prev.pointsToNext || 0,
+          level: data.newLevel,
+        }
+        
+        if (data.levelUp) {
+          updated.currentLevelName = `Level ${data.newLevel}`
+          // Refresh progress on level up to recalculate
+          fetchProgress()
+        }
+        
+        return updated
+      })
+    }
+
+    socket.on('points:earned', handlePointsEarned)
+
+    return () => {
+      socket.off('points:earned', handlePointsEarned)
+    }
+  }, [socket])
 
   if (loading) {
     return (

@@ -134,13 +134,13 @@ export const Register = () => {
         const role = result.payload?.user?.role
         console.log('Registration successful, role:', role)
         if (role === 'user') {
-          navigate('/dashboard')
+          navigate('/user/dashboard')
         } else if (role === 'ngo_admin') {
           navigate('/ngo/dashboard')
         } else if (role === 'admin') {
           navigate('/admin/dashboard')
         } else {
-          navigate('/dashboard')
+          navigate('/user/dashboard')
         }
       } else if (result.type.endsWith('/rejected')) {
         console.error('Registration rejected:', result.payload)

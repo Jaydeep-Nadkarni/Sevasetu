@@ -13,6 +13,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [], redirectTo = '/log
     }
   }, [isAuthenticated, user, dispatch])
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -21,12 +22,18 @@ export const ProtectedRoute = ({ children, allowedRoles = [], redirectTo = '/log
     )
   }
 
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to={redirectTo} replace />
   }
 
-  if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />
+  // Check role-based access control
+  if (allowedRoles.length > 0 && user) {
+    const hasAccess = allowedRoles.includes(user.role)
+    if (!hasAccess) {
+      console.warn(`User role '${user.role}' not in allowed roles:`, allowedRoles)
+      return <Navigate to="/unauthorized" replace />
+    }
   }
 
   return children

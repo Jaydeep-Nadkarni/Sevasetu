@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import CalendarHeatmap from 'react-calendar-heatmap'
 import 'react-calendar-heatmap/dist/styles.css'
 import { Tooltip } from 'react-tooltip'
+import { RecentActivity } from '../../components/RecentActivity'
 
 const StatCard = ({ icon, label, value, change, isDark }) => (
   <motion.div
@@ -137,6 +138,16 @@ export const AdminDashboard = () => {
               </Card>
             </div>
           </div>
+
+          {/* Recent Activity Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+            className="mt-8"
+          >
+            <RecentActivity limit={10} />
+          </motion.div>
         </main>
     </div>
   )

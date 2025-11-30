@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { Card } from '../../components/UI/Card'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { RecentActivity } from '../../components/RecentActivity'
 
 const StatCard = ({ icon, label, value, change, isDark }) => (
   <motion.div
@@ -103,6 +104,16 @@ export const NGODashboard = () => {
               </Card>
             </div>
           </div>
+
+          {/* Recent Activity Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.4 }}
+            className="mt-8"
+          >
+            <RecentActivity limit={10} />
+          </motion.div>
         </main>
     </div>
   )

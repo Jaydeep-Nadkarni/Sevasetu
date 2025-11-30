@@ -5,6 +5,7 @@ import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
 import RecommendationWidget from '../../components/Recommendations/RecommendationWidget'
+import { RecentActivity } from '../../components/RecentActivity'
 
 const StatCard = ({ icon, label, value, change, isDark }) => {
   return (
@@ -33,30 +34,6 @@ const StatCard = ({ icon, label, value, change, isDark }) => {
   )
 }
 
-const RecentActivityItem = ({ type, description, time, isDark }) => {
-  const icons = {
-    donation: '❤️',
-    event: '🎉',
-    volunteer: '🤝',
-    achievement: '🏆',
-  }
-
-  return (
-    <motion.div
-      className="flex items-center gap-4 py-3"
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="text-2xl">{icons[type] || '•'}</div>
-      <div className="flex-1">
-        <p className="font-medium">{description}</p>
-        <p className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>{time}</p>
-      </div>
-    </motion.div>
-  )
-}
-
 export const Dashboard = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
@@ -66,13 +43,6 @@ export const Dashboard = () => {
     { icon: '🤝', label: 'Volunteer Hours', value: '48', change: 8 },
     { icon: '🎉', label: 'Events Attended', value: '12', change: 20 },
     { icon: '🏆', label: 'Badges Earned', value: '8', change: 0 },
-  ]
-
-  const recentActivity = [
-    { type: 'donation', description: 'Donated ₹500 to Education NGO', time: '2 days ago' },
-    { type: 'event', description: 'Attended Community Clean-up Drive', time: '5 days ago' },
-    { type: 'volunteer', description: 'Logged 4 volunteer hours', time: '1 week ago' },
-    { type: 'achievement', description: 'Earned "Helping Hand" badge', time: '2 weeks ago' },
   ]
 
   const containerVariants = {
@@ -158,13 +128,7 @@ export const Dashboard = () => {
           transition={{ duration: 0.3, delay: 0.3 }}
           className="lg:col-span-2"
         >
-          <Card header="Recent Activity">
-            <div className="space-y-2">
-              {recentActivity.map((activity, index) => (
-                <RecentActivityItem key={index} {...activity} isDark={isDark} />
-              ))}
-            </div>
-          </Card>
+          <RecentActivity limit={8} />
         </motion.div>
       </div>
 
