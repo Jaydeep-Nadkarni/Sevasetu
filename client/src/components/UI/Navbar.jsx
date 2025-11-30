@@ -232,6 +232,7 @@ export const Navbar = ({ onMenuClick }) => {
                       { label: 'Donate Money', path: '/donate-money' },
                       { label: 'Transaction History', path: '/transactions' },
                       { label: 'Profile', path: '/profile' },
+                      { label: 'Settings', path: '/settings' },
                     ].map((item) => (
                       <button
                         key={item.path}

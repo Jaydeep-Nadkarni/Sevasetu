@@ -43,7 +43,7 @@ const ModernSidebar = ({ isOpen, onClose }) => {
         { icon: Trophy, label: 'Progress', path: '/progress' },
         { icon: Award, label: 'Certificates', path: '/certificates' },
         { icon: Users, label: 'Leaderboard', path: '/leaderboard' },
-        { icon: Settings, label: 'Settings', path: '/profile' },
+        { icon: Settings, label: 'Settings', path: '/settings' },
       ]
     } else if (user?.role === 'ngo_admin') {
       return [
@@ -54,7 +54,7 @@ const ModernSidebar = ({ isOpen, onClose }) => {
         { icon: Calendar, label: 'Events', path: '/ngo/events' },
         { icon: HelpCircle, label: 'Help Requests', path: '/ngo/help-requests' },
         { icon: CheckSquare, label: 'QR Scanner', path: '/ngo/scan-qr' },
-        { icon: Settings, label: 'Settings', path: '/ngo/settings' },
+        { icon: Settings, label: 'Settings', path: '/settings' },
       ]
     } else if (user?.role === 'admin') {
       return [
@@ -62,7 +62,7 @@ const ModernSidebar = ({ isOpen, onClose }) => {
         { icon: CheckSquare, label: 'NGO Verification', path: '/admin/ngo-verification' },
         { icon: Users, label: 'User Management', path: '/admin/users' },
         { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-        { icon: Settings, label: 'Settings', path: '/profile' },
+        { icon: Settings, label: 'Settings', path: '/settings' },
       ]
     }
     return []

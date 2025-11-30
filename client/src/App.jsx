@@ -6,6 +6,7 @@ import { Register } from './pages/Auth/Register'
 import { Unauthorized } from './pages/Auth/Unauthorized'
 import { Dashboard } from './pages/User/Dashboard'
 import { Profile } from './pages/User/Profile'
+import Settings from './pages/Settings'
 import CreateDonation from './pages/User/CreateDonation'
 import DonationHistory from './pages/User/DonationHistory'
 import NGODashboard from './pages/NGO/Dashboard'
@@ -121,6 +122,17 @@ function App() {
             <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
               <DashboardLayout>
                 <Profile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
+              <DashboardLayout>
+                <Settings />
               </DashboardLayout>
             </ProtectedRoute>
           }
