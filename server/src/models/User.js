@@ -103,6 +103,8 @@ const userSchema = new mongoose.Schema(
       emailNotifications: { type: Boolean, default: true },
       pushNotifications: { type: Boolean, default: true },
       newsletter: { type: Boolean, default: true },
+      interests: [{ type: String }], // e.g., 'Education', 'Environment'
+      maxDistance: { type: Number, default: 50 }, // in km
     },
     blockedNGOs: [
       {

@@ -15,6 +15,7 @@ import ngoRoutes from './routes/ngoRoutes.js'
 import certificateRoutes from './routes/certificateRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js'
 import chatRoutes from './routes/chatRoutes.js'
+import recommendationRoutes from './routes/recommendationRoutes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -100,6 +101,9 @@ app.use('/api/payment', paymentRoutes)
 
 // Chat routes
 app.use('/api/chat', chatRoutes)
+
+// Recommendation routes
+app.use('/api/recommendations', recommendationRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {

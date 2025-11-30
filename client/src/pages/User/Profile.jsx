@@ -360,18 +360,18 @@ export const Profile = () => {
                       className="w-4 h-4 rounded"
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Event Reminders</p>
-                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Get reminded about events
-                      </p>
+                  
+                  {/* Recommendation Interests */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <p className="font-medium mb-2">Interests (for Recommendations)</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Education', 'Environment', 'Health', 'Animals', 'Disaster Relief'].map(interest => (
+                        <label key={interest} className="inline-flex items-center space-x-2 cursor-pointer">
+                          <input type="checkbox" className="rounded text-primary focus:ring-primary" />
+                          <span className="text-sm">{interest}</span>
+                        </label>
+                      ))}
                     </div>
-                    <input
-                      type="checkbox"
-                      defaultChecked
-                      className="w-4 h-4 rounded"
-                    />
                   </div>
                 </div>
               </Card>

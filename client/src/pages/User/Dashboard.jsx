@@ -5,6 +5,7 @@ import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
+import RecommendationWidget from '../../components/Recommendations/RecommendationWidget'
 
 const StatCard = ({ icon, label, value, change, isDark }) => {
   return (
@@ -137,6 +138,16 @@ export const Dashboard = () => {
               {stats.map((stat, index) => (
                 <StatCard key={index} {...stat} isDark={isDark} />
               ))}
+            </motion.div>
+
+            {/* Recommendations */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className="mb-8"
+            >
+              <RecommendationWidget type="all" title="Recommended for You" />
             </motion.div>
 
             {/* Main Content Area */}
