@@ -1,0 +1,8 @@
+// .prettierignore - Files to ignore during formatting
+node_modules/
+dist/
+build/
+.next/
+coverage/
+.env
+.env.local
