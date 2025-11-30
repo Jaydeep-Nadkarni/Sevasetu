@@ -21,6 +21,8 @@ import HelpRequestManagement from './pages/NGO/HelpRequestManagement'
 import NearbyMap from './pages/Map/NearbyMap'
 import Progress from './pages/User/Progress'
 import Leaderboard from './pages/Leaderboard'
+import Certificates from './pages/User/Certificates'
+import CertificateVerify from './pages/CertificateVerify'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
@@ -116,6 +118,22 @@ function App() {
               <Leaderboard />
             </DashboardLayout>
           }
+        />
+
+        <Route
+          path="/certificates"
+          element={
+            <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
+              <DashboardLayout>
+                <Certificates />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/verify-certificate/:code"
+          element={<CertificateVerify />}
         />
 
         {/* User Donation Routes */}
