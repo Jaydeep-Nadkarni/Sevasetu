@@ -246,33 +246,33 @@ const DonationHistory = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedDonation(null)}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-0 md:p-4 overflow-y-auto"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full my-8"
+              className="bg-white dark:bg-gray-800 rounded-none md:rounded-2xl shadow-2xl w-full md:max-w-2xl min-h-screen md:min-h-0 md:my-8 flex flex-col"
             >
               {/* Modal Header */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 {selectedDonation.images?.length > 0 && (
                   <img
                     src={selectedDonation.images[0].url}
                     alt="Donation"
-                    className="w-full h-64 object-cover rounded-t-2xl"
+                    className="w-full h-48 md:h-64 object-cover md:rounded-t-2xl"
                   />
                 )}
                 <button
                   onClick={() => setSelectedDonation(null)}
-                  className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition"
+                  className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition z-10"
                 >
                   ✕
                 </button>
               </div>
 
               {/* Modal Content */}
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6 flex-1 overflow-y-auto">
                 {/* Status */}
                 <div className="flex items-center gap-4">
                   <div className={`px-4 py-2 rounded-lg text-sm font-bold ${getStatusBadge(selectedDonation.status).color} ${getStatusBadge(selectedDonation.status).textColor}`}>
