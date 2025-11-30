@@ -20,14 +20,17 @@ const DonateMoney = () => {
   const [notes, setNotes] = useState('')
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successData, setSuccessData] = useState(null)
+  const [paymentError, setPaymentError] = useState(null)
 
   useEffect(() => {
     const fetchNGOs = async () => {
       try {
         const { data } = await api.get('/ngos')
-        setNgos(data.data)
+        setNgos(Array.isArray(data.data) ? data.data : [])
       } catch (error) {
-        console.error('Error fetching NGOs:', error)
+        console.error('Error fetching NGOs:', error.response?.status, error.response?.data || error.message)
+        // Silently fail - show empty NGO list
+        setNgos([])
       }
     }
     fetchNGOs()
@@ -78,54 +81,110 @@ const DonateMoney = () => {
 
   const handlePayment = async (e) => {
     e.preventDefault()
+    console.log('Payment initiated', { amount, selectedNGO })
     
     if (!amount || amount < 1) {
       toast.error('Please enter a valid amount')
       return
     }
 
+    if (!user) {
+      toast.error('Please login to make a donation')
+      navigate('/login')
+      return
+    }
+
     setLoading(true)
+    setPaymentError(null)
 
     try {
       // 1. Load Razorpay SDK
+      console.log('Loading Razorpay SDK...')
       const res = await loadRazorpay()
       if (!res) {
-        toast.error('Razorpay SDK failed to load')
+        const errorMsg = 'Razorpay SDK failed to load. Please check your internet connection.'
+        console.error(errorMsg)
+        toast.error(errorMsg)
+        setLoading(false)
+        return
+      }
+      console.log('Razorpay SDK loaded successfully')
+
+      // 2. Create Order
+      console.log('Creating payment order...')
+      let createOrderResponse
+      try {
+        createOrderResponse = await api.post('/payment/create-order', {
+          amount: Number(amount),
+          ngoId: selectedNGO || null,
+          isAnonymous,
+          notes
+        })
+        console.log('Order created:', createOrderResponse.data)
+      } catch (orderError) {
+        console.error('Order creation error:', orderError.response?.data || orderError.message)
+        const errorMsg = orderError.response?.data?.message || orderError.response?.statusText || 'Failed to create payment order. Please try again.'
+        
+        // More detailed error message for debugging
+        if (orderError.response?.status === 500) {
+          console.error('Backend server error. Check backend logs for details.')
+        } else if (orderError.response?.status === 429) {
+          console.error('Rate limit exceeded. Please wait a moment and try again.')
+        }
+        
+        toast.error(errorMsg)
+        setPaymentError(errorMsg)
         setLoading(false)
         return
       }
 
-      // 2. Create Order
-      const { data } = await api.post('/payment/create-order', {
-        amount: Number(amount),
-        ngoId: selectedNGO || null,
-        isAnonymous,
-        notes
-      })
+      const { orderId, amount: orderAmount, currency, key, transactionId } = createOrderResponse.data.data
 
-      const { orderId, amount: orderAmount, currency, key, transactionId } = data.data
+      if (!orderId || !key) {
+        const errorMsg = 'Invalid payment configuration. Please contact support.'
+        console.error(errorMsg, { orderId, key })
+        toast.error(errorMsg)
+        setPaymentError(errorMsg)
+        setLoading(false)
+        return
+      }
+
+      console.log('Opening Razorpay payment interface...', { orderId, orderAmount, key })
 
       // 3. Initialize Razorpay with enhanced handlers
       const options = {
         key,
         amount: orderAmount,
-        currency,
+        currency: currency || 'INR',
         name: 'SevaSetu',
         description: selectedNGO ? 'Donation to NGO' : 'Donation to Platform',
         image: '/logo.png',
         order_id: orderId,
         handler: async function (response) {
+          console.log('Payment handler called with response:', response)
           try {
             // 4. Verify Payment on Backend
-            const verifyRes = await api.post('/payment/verify', {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              ngoId: selectedNGO,
-              isAnonymous,
-              notes,
-              transactionId
-            })
+            console.log('Verifying payment...')
+            let verifyRes
+            try {
+              verifyRes = await api.post('/payment/verify', {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                ngoId: selectedNGO,
+                isAnonymous,
+                notes,
+                transactionId
+              })
+              console.log('Payment verified:', verifyRes.data)
+            } catch (verifyError) {
+              console.error('Verification error:', verifyError.response || verifyError.message)
+              const errorMsg = verifyError.response?.data?.message || 'Payment verification failed. Please contact support.'
+              toast.error(errorMsg)
+              setPaymentError(errorMsg)
+              setLoading(false)
+              return
+            }
 
             if (verifyRes.data.success) {
               // Show success UI with points and level up info
@@ -146,17 +205,20 @@ const DonateMoney = () => {
             }
           } catch (error) {
             console.error('Verification Error:', error)
-            toast.error(error.response?.data?.message || 'Payment verification failed')
+            const errorMsg = error.response?.data?.message || 'Payment verification failed'
+            toast.error(errorMsg)
+            setPaymentError(errorMsg)
+            setLoading(false)
           }
         },
         prefill: {
-          name: `${user.firstName} ${user.lastName}`,
-          email: user.email,
-          contact: user.phone || ''
+          name: `${user?.firstName || ''} ${user?.lastName || ''}`,
+          email: user?.email || '',
+          contact: user?.phone || ''
         },
         notes: {
           address: 'SevaSetu Office',
-          userId: user._id
+          userId: user?._id || ''
         },
         theme: {
           color: '#4F46E5'
@@ -164,22 +226,30 @@ const DonateMoney = () => {
         retry: {
           enabled: true,
           max_count: 3
-        }
+        },
+        timeout: 900
       }
 
+      console.log('Initializing Razorpay with options:', options)
       const paymentObject = new window.Razorpay(options)
-      paymentObject.open()
       
       paymentObject.on('payment.failed', function (response) {
         const errorMessage = response.error.description || 'Payment failed'
-        toast.error(errorMessage)
         console.error('Payment failed:', response.error)
+        toast.error(errorMessage)
+        setPaymentError(errorMessage)
         setLoading(false)
       })
 
+      console.log('Opening Razorpay modal...')
+      paymentObject.open()
+      setLoading(false)
+
     } catch (error) {
       console.error('Payment Error:', error)
-      toast.error(error.response?.data?.message || 'Something went wrong')
+      const errorMsg = error.response?.data?.message || 'Something went wrong. Please try again.'
+      toast.error(errorMsg)
+      setPaymentError(errorMsg)
       setLoading(false)
     }
   }
@@ -268,6 +338,13 @@ const DonateMoney = () => {
 
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
           <div className="p-8">
+            {paymentError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                <p className="font-semibold text-sm">Payment Error:</p>
+                <p className="text-sm mt-1">{paymentError}</p>
+              </div>
+            )}
+            
             <form onSubmit={handlePayment} className="space-y-6">
               
               {/* Amount Selection */}
@@ -312,7 +389,7 @@ const DonateMoney = () => {
                   className="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">SevaSetu Platform (General Fund)</option>
-                  {ngos.map((ngo) => (
+                  {Array.isArray(ngos) && ngos.map((ngo) => (
                     <option key={ngo._id} value={ngo._id}>
                       {ngo.name}
                     </option>

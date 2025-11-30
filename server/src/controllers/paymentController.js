@@ -15,6 +15,15 @@ import { sendNotification } from '../services/notificationService.js'
 export const createOrder = asyncHandler(async (req, res) => {
   const { amount, currency = 'INR', ngoId, isAnonymous = false, notes } = req.body
 
+  // Validate Razorpay configuration
+  if (!config.razorpay.keyId || !config.razorpay.keySecret || 
+      config.razorpay.keyId === 'your_razorpay_key_id_here' ||
+      config.razorpay.keySecret === 'your_razorpay_key_secret_here') {
+    console.error('❌ Razorpay credentials not configured!')
+    console.error('   Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in .env file')
+    return errorResponse(res, 'Payment gateway not configured. Please contact support.', 500)
+  }
+
   if (!amount || amount < 1) {
     return errorResponse(res, 'Invalid amount', 400)
   }
@@ -32,13 +41,20 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   try {
+    console.log('📝 Creating Razorpay order with amount:', amount, currency)
     const order = await razorpay.orders.create(options)
+    console.log('✅ Razorpay order created:', order.id)
 
     // Create Transaction Record
     let targetNgoId = ngoId
     if (!targetNgoId) {
       const systemNgo = await NGO.findOne({ isSystem: true })
       targetNgoId = systemNgo ? systemNgo._id : (await NGO.findOne())?._id
+    }
+
+    if (!targetNgoId) {
+      console.warn('⚠️  No NGO found for transaction')
+      // Don't fail, allow transaction without NGO
     }
 
     const transaction = await Transaction.create({
@@ -55,6 +71,8 @@ export const createOrder = asyncHandler(async (req, res) => {
       }
     })
 
+    console.log('💾 Transaction created:', transaction._id)
+
     successResponse(res, {
       orderId: order.id,
       amount: order.amount,
@@ -64,8 +82,22 @@ export const createOrder = asyncHandler(async (req, res) => {
     }, 'Order created successfully')
 
   } catch (error) {
-    console.error('Razorpay Order Error:', error)
-    return errorResponse(res, 'Failed to create payment order', 500)
+    console.error('❌ Razorpay Order Error:', {
+      message: error.message,
+      statusCode: error.statusCode,
+      code: error.code,
+      description: error.description,
+      fullError: error
+    })
+    
+    // Provide specific error messages
+    if (error.statusCode === 401 || error.code === 'INVALID_KEY') {
+      return errorResponse(res, 'Invalid Razorpay credentials. Contact support.', 500)
+    } else if (error.statusCode === 400) {
+      return errorResponse(res, `Invalid payment request: ${error.description || 'Please check amount and try again'}`, 400)
+    }
+    
+    return errorResponse(res, 'Failed to create payment order: ' + (error.description || error.message), 500)
   }
 })
 

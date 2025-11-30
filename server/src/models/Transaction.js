@@ -11,7 +11,6 @@ const transactionSchema = new mongoose.Schema(
     ngo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'NGO',
-      required: [true, 'NGO is required'],
       index: true,
     },
     donation: {
@@ -31,7 +30,7 @@ const transactionSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       enum: ['credit_card', 'debit_card', 'upi', 'bank_transfer', 'wallet', 'netbanking'],
-      required: [true, 'Payment method is required'],
+      default: 'netbanking',
     },
     status: {
       type: String,

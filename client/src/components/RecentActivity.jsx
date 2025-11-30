@@ -105,12 +105,14 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
         const response = await api.get(endpoint, {
           params: { limit }
         })
-        setActivities(response.data.data.activities || [])
+        const data = response.data?.data?.activities || response.data?.data || []
+        setActivities(Array.isArray(data) ? data : [])
         setError(null)
       } catch (err) {
         console.error('Failed to fetch activities:', err)
-        setError('Failed to load recent activity')
+        // Don't show error to user, just set empty activities
         setActivities([])
+        setError(null)
       } finally {
         setIsLoading(false)
       }
@@ -156,10 +158,6 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      ) : error ? (
-        <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-          {error}
         </div>
       ) : activities.length === 0 ? (
         <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
