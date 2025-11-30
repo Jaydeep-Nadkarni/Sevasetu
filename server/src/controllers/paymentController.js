@@ -7,7 +7,6 @@ import User from '../models/User.js'
 import NGO from '../models/NGO.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
 import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
-import { sendEmail } from '../utils/email.js'
 import { sendNotification } from '../services/notificationService.js'
 
 // @desc    Create Razorpay Order
@@ -130,36 +129,13 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     const points = calculateDonationPoints('money', transaction.amount)
     const pointsResult = await addPoints(req.user._id, points, 'donation')
 
-    // 4. Send Receipt Email
-    const user = await User.findById(req.user._id)
-    const ngo = await NGO.findById(transaction.ngo)
-    
-    const emailSubject = `Donation Receipt - ${donation._id}`
-    const emailBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #4F46E5;">Thank You for Your Donation!</h2>
-        <p>Hi ${user.firstName},</p>
-        <p>We have successfully received your donation of <strong>${transaction.currency} ${transaction.amount}</strong>.</p>
-        
-        <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>Transaction ID:</strong> ${razorpay_payment_id}</p>
-          <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-          <p><strong>Beneficiary:</strong> ${ngo ? ngo.name : 'SevaSetu Platform'}</p>
-        </div>
-
-        <p>You earned <strong>${points} points</strong> for this contribution!</p>
-        
-        <p>Your support helps us make a real difference.</p>
-        <p>Best regards,<br>The SevaSetu Team</p>
-      </div>
-    `
-    
-    // Don't await email to speed up response
-    sendEmail(user.email, emailSubject, emailBody).catch(console.error)
-
-    // 5. Send Notification
+    // 4. Send Notification & Email
     const io = req.app.get('io')
     if (io) {
+        // Fetch NGO name
+        const ngo = await NGO.findById(transaction.ngo)
+        const ngoName = ngo ? ngo.name : 'SevaSetu Platform'
+
         await sendNotification(io, {
             recipientId: req.user._id,
             type: 'donation_update',
@@ -168,9 +144,41 @@ export const verifyPayment = asyncHandler(async (req, res) => {
             data: {
                 transactionId: transaction._id,
                 donationId: donation._id,
-                pointsEarned: points
+                pointsEarned: points,
+                levelUp: pointsResult.levelUp
+            },
+            emailTemplate: 'payment_receipt',
+            emailData: {
+                amount: transaction.amount,
+                currency: transaction.currency,
+                transactionId: razorpay_payment_id,
+                date: new Date().toLocaleDateString(),
+                ngoName: ngoName,
+                paymentMethod: 'Online',
+                points: points
             }
         })
+
+        // Send Certificate Email if earned
+        if (pointsResult.newCertificate) {
+            await sendNotification(io, {
+                recipientId: req.user._id,
+                type: 'certificate_earned',
+                title: 'New Certificate Earned!',
+                message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+                data: {
+                    certificateId: pointsResult.newCertificate._id,
+                    certificateUrl: pointsResult.newCertificate.certificateUrl
+                },
+                emailTemplate: 'certificate_issued',
+                emailData: {
+                    recipientName: req.user.firstName,
+                    certificateTitle: pointsResult.newCertificate.title,
+                    issueDate: new Date().toLocaleDateString(),
+                    certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+                }
+            })
+        }
     }
 
     successResponse(res, {

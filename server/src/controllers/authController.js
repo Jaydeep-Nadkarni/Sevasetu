@@ -1,6 +1,8 @@
 import { User, NGO } from '../models/index.js'
 import { generateToken, generateRefreshToken } from '../utils/jwt.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
+import crypto from 'crypto'
+import { sendEmail } from '../services/emailService.js'
 
 /**
  * Register a new user (user or admin role)
@@ -14,6 +16,10 @@ export const registerUser = asyncHandler(async (req, res) => {
     return errorResponse(res, 'Email already registered', 400)
   }
 
+  // Generate verification token
+  const verificationToken = crypto.randomBytes(32).toString('hex')
+  const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+
   // Create user
   const user = new User({
     email,
@@ -22,9 +28,30 @@ export const registerUser = asyncHandler(async (req, res) => {
     lastName,
     phone,
     role: role || 'user',
+    verificationToken,
+    verificationTokenExpire,
+    isVerified: false
   })
 
   await user.save()
+
+  // Send verification email
+  const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`
+  
+  try {
+    await sendEmail(
+      user.email,
+      'Welcome to SevaSetu! Please Verify Your Email',
+      'welcome',
+      {
+        name: user.firstName,
+        verificationUrl
+      }
+    )
+  } catch (emailError) {
+    console.error('Failed to send verification email:', emailError)
+    // We don't fail registration, but user might need to resend verification
+  }
 
   // Generate tokens
   const accessToken = generateToken(user)
@@ -71,6 +98,10 @@ export const registerNGO = asyncHandler(async (req, res) => {
     return errorResponse(res, 'NGO name already exists', 400)
   }
 
+  // Generate verification token
+  const verificationToken = crypto.randomBytes(32).toString('hex')
+  const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+
   // Create user with ngo_admin role
   const user = new User({
     email,
@@ -79,9 +110,29 @@ export const registerNGO = asyncHandler(async (req, res) => {
     lastName,
     phone,
     role: 'ngo_admin',
+    verificationToken,
+    verificationTokenExpire,
+    isVerified: false
   })
 
   await user.save()
+
+  // Send verification email
+  const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`
+  
+  try {
+    await sendEmail(
+      user.email,
+      'Welcome to SevaSetu! Please Verify Your Email',
+      'welcome',
+      {
+        name: user.firstName,
+        verificationUrl
+      }
+    )
+  } catch (emailError) {
+    console.error('Failed to send verification email:', emailError)
+  }
 
   // Create NGO with owner reference to the user
   const ngoData = new NGO({
@@ -253,4 +304,66 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
   delete userData.password
 
   successResponse(res, { user: userData }, 'User data retrieved successfully')
+})
+
+/**
+ * Verify email address
+ */
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.params
+
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationTokenExpire: { $gt: Date.now() },
+  })
+
+  if (!user) {
+    return errorResponse(res, 'Invalid or expired verification token', 400)
+  }
+
+  user.isVerified = true
+  user.verificationToken = undefined
+  user.verificationTokenExpire = undefined
+  await user.save()
+
+  successResponse(res, null, 'Email verified successfully')
+})
+
+/**
+ * Resend verification email
+ */
+export const resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body
+
+  const user = await User.findOne({ email })
+  if (!user) {
+    return errorResponse(res, 'User not found', 404)
+  }
+
+  if (user.isVerified) {
+    return errorResponse(res, 'Email already verified', 400)
+  }
+
+  // Generate new token
+  const verificationToken = crypto.randomBytes(32).toString('hex')
+  const verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000
+
+  user.verificationToken = verificationToken
+  user.verificationTokenExpire = verificationTokenExpire
+  await user.save()
+
+  // Send email
+  const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`
+  
+  await sendEmail(
+    user.email,
+    'Verify Your Email - SevaSetu',
+    'verification',
+    {
+      name: user.firstName,
+      verificationUrl
+    }
+  )
+
+  successResponse(res, null, 'Verification email sent')
 })

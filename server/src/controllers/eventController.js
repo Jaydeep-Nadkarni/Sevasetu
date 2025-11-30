@@ -4,6 +4,7 @@ import NGO from '../models/NGO.js'
 import cloudinary from '../config/cloudinary.js'
 import QRCode from 'qrcode'
 import { sendNotification } from '../services/notificationService.js'
+import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
 
 // === CREATE EVENT ===
 export const createEvent = async (req, res) => {
@@ -441,6 +442,23 @@ export const joinEvent = async (req, res) => {
           attendeeCount: event.registeredCount
         }
       })
+
+      // Send confirmation email to attendee
+      await sendNotification(io, {
+        recipientId: userId,
+        type: 'event_registration',
+        title: 'Event Registration Confirmed',
+        message: `You have successfully registered for ${event.title}`,
+        data: { eventId: id },
+        emailTemplate: 'event_registration',
+        emailData: {
+          eventTitle: event.title,
+          eventDate: new Date(event.eventDate).toLocaleDateString(),
+          eventTime: event.eventTime,
+          location: event.location,
+          qrCodeUrl: qrCode
+        }
+      })
     }
 
     res.json({
@@ -585,6 +603,10 @@ export const scanQRCode = async (req, res) => {
     }
     await event.save()
 
+    // Award Points
+    const points = calculateDonationPoints('event')
+    const pointsResult = await addPoints(qrRecord.participant, points, 'event')
+
     // Populate and return
     await qrRecord.populate('participant', 'name email profilePicture')
 
@@ -594,12 +616,56 @@ export const scanQRCode = async (req, res) => {
       io.to(`event:${id}`).emit('event:attendance_scanned', {
         message: `Attendance marked for ${qrRecord.participant?.name || 'user'}`,
         qrRecord,
+        pointsEarned: points,
+        levelUp: pointsResult.levelUp
       })
+
+      // Send email to participant
+      await sendNotification(io, {
+        recipientId: qrRecord.participant._id,
+        type: 'attendance_verified',
+        title: 'Attendance Verified',
+        message: `Your attendance for ${event.title} has been verified. You earned ${points} points.`,
+        data: { 
+            eventId: id,
+            pointsEarned: points,
+            levelUp: pointsResult.levelUp
+        },
+        emailTemplate: 'attendance_confirmation',
+        emailData: {
+          eventTitle: event.title,
+          pointsEarned: points,
+          totalPoints: pointsResult.totalPoints
+        }
+      })
+
+      // Send Certificate Email if earned
+      if (pointsResult.newCertificate) {
+        await sendNotification(io, {
+            recipientId: qrRecord.participant._id,
+            type: 'certificate_earned',
+            title: 'New Certificate Earned!',
+            message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+            data: {
+                certificateId: pointsResult.newCertificate._id,
+                certificateUrl: pointsResult.newCertificate.certificateUrl
+            },
+            emailTemplate: 'certificate_issued',
+            emailData: {
+                recipientName: qrRecord.participant.name || 'Volunteer',
+                certificateTitle: pointsResult.newCertificate.title,
+                issueDate: new Date().toLocaleDateString(),
+                certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+            }
+        })
+      }
     }
 
     res.json({
       message: 'Attendance marked successfully',
       qrRecord,
+      pointsEarned: points,
+      levelUp: pointsResult.levelUp
     })
   } catch (error) {
     console.error('Error scanning QR code:', error)

@@ -227,6 +227,13 @@ export const claimHelpRequest = async (req, res) => {
           requestId: helpRequest._id,
           ngoId: ngo._id,
           status: 'in_progress'
+        },
+        emailTemplate: 'help_request_update',
+        emailData: {
+          requestTitle: helpRequest.title,
+          status: 'In Progress',
+          message: `${ngo.name} has claimed your request and will be in touch shortly.`,
+          dashboardUrl: `${process.env.CLIENT_URL}/dashboard`
         }
       })
     }
@@ -342,6 +349,13 @@ export const updateStatus = async (req, res) => {
         data: {
           requestId: helpRequest._id,
           status
+        },
+        emailTemplate: 'help_request_update',
+        emailData: {
+          requestTitle: helpRequest.title,
+          status: status,
+          message: `The status of your help request has been updated to ${status}.`,
+          dashboardUrl: `${process.env.CLIENT_URL}/dashboard`
         }
       })
 

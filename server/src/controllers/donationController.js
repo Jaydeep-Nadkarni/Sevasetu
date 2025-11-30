@@ -121,6 +121,26 @@ export const createItemDonation = asyncHandler(async (req, res) => {
       { path: 'primaryNGO', select: 'name email phone' },
     ])
 
+    // Send confirmation email to donor
+    const io = req.app.get('io')
+    await sendNotification(io, {
+      recipientId: req.user._id,
+      type: 'donation_update',
+      title: 'Donation Created',
+      message: 'Your donation has been created and is visible to nearby NGOs.',
+      data: { donationId: donation._id },
+      emailTemplate: 'donation_confirmation',
+      emailData: {
+        donationId: donation._id,
+        category: itemsCategory,
+        quantity: itemsQuantity,
+        unit: itemsUnit,
+        ngoName: 'Pending Assignment',
+        status: 'Pending',
+        points: 0
+      }
+    })
+
     successResponse(
       res,
       donation,
@@ -356,6 +376,16 @@ export const acceptDonation = asyncHandler(async (req, res) => {
         ngoId: userNGO._id,
         ngoName: userNGO.name,
         status: 'accepted'
+      },
+      emailTemplate: 'donation_confirmation',
+      emailData: {
+        donationId: donation._id,
+        category: donation.items.category,
+        quantity: donation.items.quantity,
+        unit: donation.items.unit,
+        ngoName: userNGO.name,
+        status: 'Accepted',
+        points: 0
       }
     })
 
@@ -476,8 +506,39 @@ export const completePickup = asyncHandler(async (req, res) => {
         levelUp: pointsResult.levelUp,
         newLevel: pointsResult.newLevel,
         status: 'completed'
+      },
+      emailTemplate: 'donation_confirmation',
+      emailData: {
+        donationId: donation._id,
+        category: donation.items.category,
+        quantity: donation.items.quantity,
+        unit: donation.items.unit,
+        ngoName: userNGO.name,
+        status: 'Completed',
+        points: points
       }
     })
+
+    // If level up / certificate earned, send certificate email
+    if (pointsResult.newCertificate) {
+      await sendNotification(io, {
+        recipientId: donation.donor,
+        type: 'certificate_earned',
+        title: 'New Certificate Earned!',
+        message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+        data: {
+          certificateId: pointsResult.newCertificate._id,
+          certificateUrl: pointsResult.newCertificate.certificateUrl
+        },
+        emailTemplate: 'certificate_issued',
+        emailData: {
+          recipientName: donation.donor.firstName,
+          certificateTitle: pointsResult.newCertificate.title,
+          issueDate: new Date().toLocaleDateString(),
+          certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+        }
+      })
+    }
 
     await donation.populate([
       { path: 'donor', select: 'firstName lastName email' },
