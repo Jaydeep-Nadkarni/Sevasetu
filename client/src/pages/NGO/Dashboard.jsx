@@ -5,6 +5,7 @@ import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { Calendar, DollarSign, HelpCircle, CheckCircle } from 'lucide-react'
 import { RecentActivity } from '../../components/RecentActivity'
 import api from '../../utils/api'
 
@@ -64,7 +65,7 @@ export const NGODashboard = () => {
         transition={{ duration: 0.3 }}
       >
         <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-          Welcome back, {user?.firstName}! 👋
+          Welcome back, {user?.firstName}!
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Manage your NGO activities and events
@@ -79,19 +80,22 @@ export const NGODashboard = () => {
               onClick={() => navigate('/ngo/events')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
             >
-              🎉 Create Event
+              <Calendar className="w-5 h-5" />
+              Create Event
             </Button>
             <Button 
               onClick={() => navigate('/ngo/donations')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
             >
-              💰 View Donations
+              <DollarSign className="w-5 h-5" />
+              View Donations
             </Button>
             <Button 
               onClick={() => navigate('/ngo/help-requests')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             >
-              🆘 Help Requests
+              <HelpCircle className="w-5 h-5" />
+              Help Requests
             </Button>
           </div>
         </Card>
@@ -165,8 +169,9 @@ export const NGODashboard = () => {
                 <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Verification Status
                 </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                  {user?.verificationStatus === 'verified' ? '✓ Verified' : '⏳ Pending'}
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1 flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6" />
+                  {user?.verificationStatus === 'verified' ? 'Verified' : 'Pending'}
                 </p>
               </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Filter, Search, MapPin, Calendar, AlertCircle, Users } from 'lucide-react'
 import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'

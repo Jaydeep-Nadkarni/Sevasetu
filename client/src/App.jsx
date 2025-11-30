@@ -3,11 +3,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Login } from './pages/Auth/Login'
 import { Register } from './pages/Auth/Register'
+import { RegisterUser } from './pages/Auth/RegisterUser'
+import { RegisterNGO } from './pages/Auth/RegisterNGO'
 import { Unauthorized } from './pages/Auth/Unauthorized'
 import Landing from './pages/Landing'
 import { Dashboard } from './pages/User/Dashboard'
 import { Profile } from './pages/User/Profile'
 import Settings from './pages/Settings'
+import { ActivityLog } from './pages/User/ActivityLog'
 import CreateDonation from './pages/User/CreateDonation'
 import DonationHistory from './pages/User/DonationHistory'
 import NGODashboard from './pages/NGO/Dashboard'
@@ -36,7 +39,7 @@ import ChatWidget from './components/Chatbot/ChatWidget'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
-import { getCurrentUser } from './store/slices/authSlice'
+import { getCurrentUser } from './store/slices/authSlice.js'
 import { Navbar } from './components/UI/Navbar'
 
 import AdminDashboard from './pages/Admin/Dashboard'
@@ -69,7 +72,8 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<RegisterUser />} />
+        <Route path="/register-ngo" element={<RegisterNGO />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Home Route - Landing Page for Unauthenticated Users */}
@@ -131,6 +135,17 @@ function App() {
             <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
               <DashboardLayout>
                 <Settings />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/activity-log"
+          element={
+            <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
+              <DashboardLayout>
+                <ActivityLog />
               </DashboardLayout>
             </ProtectedRoute>
           }

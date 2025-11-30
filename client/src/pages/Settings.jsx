@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '../components/UI/Card'
 import { Button } from '../components/UI/Button'
-import { Bell, Lock, Eye, Shield, Save, AlertCircle } from 'lucide-react'
+import { Bell, Lock, Eye, Shield, Save } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import api from '../utils/api'
 
@@ -12,7 +12,6 @@ const Settings = () => {
   const { isDark } = useTheme()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
   // Account settings state
@@ -83,9 +82,9 @@ const Settings = () => {
   }
 
   // Handle logout
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
-      await logout()
+      logout()
       navigate('/login')
       toast.success('Logged out successfully')
     }
@@ -105,18 +104,17 @@ const Settings = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage your account preferences and privacy settings
-          </p>
-        </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Manage your account preferences and privacy settings
+        </p>
+      </div>
 
-        {/* Settings Grid */}
-        <div className="space-y-6">
+      {/* Settings Grid */}
+      <div className="space-y-6">
           {/* Account Settings Card */}
           <Card header="Account Settings" className="dark:bg-gray-800 dark:border-gray-700">
             <div className="space-y-4">
@@ -362,8 +360,7 @@ const Settings = () => {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-export default Settings
+    )
+  }
+  
+  export default Settings

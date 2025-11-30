@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useSocket } from '../context/SocketContext'
 import { Card } from './UI/Card'
@@ -104,12 +105,14 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
         const response = await api.get(endpoint, {
           params: { limit }
         })
-        setActivities(response.data.data.activities || [])
+        const data = response.data?.data?.activities || response.data?.data || []
+        setActivities(Array.isArray(data) ? data : [])
         setError(null)
       } catch (err) {
         console.error('Failed to fetch activities:', err)
-        setError('Failed to load recent activity')
+        // Don't show error to user, just set empty activities
         setActivities([])
+        setError(null)
       } finally {
         setIsLoading(false)
       }
@@ -156,10 +159,6 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : error ? (
-        <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-          {error}
-        </div>
       ) : activities.length === 0 ? (
         <div className={`py-8 text-center ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
           <p>No recent activities yet</p>
@@ -179,12 +178,12 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
 
       {activities.length > 0 && (
         <div className={`mt-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <a 
-            href="/activity-log"
+          <Link 
+            to="/activity-log"
             className="text-sm text-primary hover:text-primary-dark font-medium transition"
           >
             View all activities →
-          </a>
+          </Link>
         </div>
       )}
     </Card>

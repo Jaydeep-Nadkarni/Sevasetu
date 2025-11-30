@@ -180,7 +180,7 @@ const Landing = () => {
                 <ArrowRight className="w-5 h-5" />
               </Button>
               <Button
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/register?role=ngo')}
                 variant="outline"
                 className="font-semibold py-3 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
               >
