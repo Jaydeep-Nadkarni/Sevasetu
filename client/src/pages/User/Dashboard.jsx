@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
-import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'

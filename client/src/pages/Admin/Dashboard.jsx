@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
-import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
 import { motion } from 'framer-motion'
 import CalendarHeatmap from 'react-calendar-heatmap'
@@ -34,7 +33,6 @@ const StatCard = ({ icon, label, value, change, isDark }) => (
 
 export const AdminDashboard = () => {
   const { isDark } = useTheme()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Mock Data
   const stats = [
@@ -56,36 +54,29 @@ export const AdminDashboard = () => {
   }).reverse()
 
   return (
-    <div className={`flex h-screen ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className={`w-full ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      <main className="overflow-y-auto p-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden p-4">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
-        </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => (
+              <StatCard key={index} {...stat} isDark={isDark} />
+            ))}
+          </div>
 
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
-                <StatCard key={index} {...stat} isDark={isDark} />
-              ))}
-            </div>
-
-            {/* Activity Heatmap */}
-            <Card header="Platform Activity (Last 365 Days)" className="mb-8">
-              <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
-                  <CalendarHeatmap
-                    startDate={new Date(today.getFullYear(), today.getMonth() - 11, 1)}
-                    endDate={today}
-                    values={heatmapData}
-                    classForValue={(value) => {
-                      if (!value) {
-                        return 'color-empty'
+          {/* Activity Heatmap */}
+          <Card header="Platform Activity (Last 365 Days)" className="mb-8">
+            <div className="overflow-x-auto">
+              <div className="min-w-[800px]">
+                <CalendarHeatmap
+                  startDate={new Date(today.getFullYear(), today.getMonth() - 11, 1)}
+                  endDate={today}
+                  values={heatmapData}
+                  classForValue={(value) => {
+                    if (!value) {
+                      return 'color-empty'
                       }
                       return `color-scale-${Math.min(value.count, 4)}`
                     }}
@@ -147,7 +138,6 @@ export const AdminDashboard = () => {
             </div>
           </div>
         </main>
-      </div>
     </div>
   )
 }

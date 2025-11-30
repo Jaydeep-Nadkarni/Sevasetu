@@ -1,7 +1,6 @@
 import React from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
-import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
@@ -34,7 +33,6 @@ const StatCard = ({ icon, label, value, change, isDark }) => (
 export const NGODashboard = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   // Mock Data - Replace with API calls
   const stats = [
@@ -54,27 +52,15 @@ export const NGODashboard = () => {
   ]
 
   return (
-    <div className={`flex h-screen ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden p-4 flex items-center gap-4">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-200'}`}
-          >
-            ☰
-          </button>
-        </div>
-
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold">NGO Dashboard</h1>
-              <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Welcome back, {user?.firstName}
-              </p>
-            </div>
+    <div className={`w-full ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      <main className="overflow-y-auto p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold">NGO Dashboard</h1>
+            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              Welcome back, {user?.firstName}
+            </p>
+          </div>
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -118,7 +104,6 @@ export const NGODashboard = () => {
             </div>
           </div>
         </main>
-      </div>
     </div>
   )
 }
