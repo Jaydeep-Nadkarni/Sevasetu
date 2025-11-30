@@ -2,6 +2,7 @@ import User from '../models/User.js'
 import Badge from '../models/Badge.js'
 import Certificate from '../models/Certificate.js'
 import { LEVELS, POINTS_CONFIG, BADGES } from '../config/gamification.js'
+import { generateCertificatePDF } from './certificateGenerator.js'
 
 /**
  * Calculate points for a donation
@@ -114,6 +115,16 @@ export const addPoints = async (userId, points, source) => {
         issueDate: new Date(),
         isVerified: true
       })
+
+      // Generate PDF and update certificate
+      try {
+        const pdfUrl = await generateCertificatePDF(certificate, user)
+        certificate.certificateUrl = pdfUrl
+        await certificate.save()
+      } catch (err) {
+        console.error('Failed to generate certificate PDF:', err)
+      }
+
       result.newCertificate = certificate
     }
 

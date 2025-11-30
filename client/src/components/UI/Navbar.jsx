@@ -125,6 +125,15 @@ export const Navbar = () => {
                     </button>
                     <button
                       onClick={() => {
+                        navigate('/certificates')
+                        setIsUserMenuOpen(false)
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      My Certificates
+                    </button>
+                    <button
+                      onClick={() => {
                         navigate('/leaderboard')
                         setIsUserMenuOpen(false)
                       }}
@@ -216,6 +225,15 @@ export const Navbar = () => {
                   className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                 >
                   My Progress
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/certificates')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  My Certificates
                 </button>
                 <button
                   onClick={() => {
