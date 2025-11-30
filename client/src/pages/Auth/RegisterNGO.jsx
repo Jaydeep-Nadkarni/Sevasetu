@@ -108,7 +108,7 @@ export const RegisterNGO = () => {
   return (
     <div className="min-h-screen bg-white flex">
       {/* Left Section - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-12 overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-8 lg:px-12 py-12 overflow-y-auto min-h-screen">
         <div className="max-w-md mx-auto w-full">
           {/* Header */}
           <div className="mb-8">
@@ -425,7 +425,7 @@ export const RegisterNGO = () => {
       </div>
 
       {/* Right Section - Illustration (Hidden on mobile) */}
-      <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-emerald-50 via-cyan-50 to-blue-50 flex-col justify-center items-center px-12 py-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:fixed lg:right-0 lg:top-0 w-1/2 h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-blue-50 flex-col justify-center items-center px-12 py-12 relative overflow-hidden">
         {/* Background decorative elements */}
         <div className="absolute top-10 right-10 w-32 h-32 bg-emerald-200 rounded-full opacity-20 blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-40 h-40 bg-cyan-200 rounded-full opacity-20 blur-3xl"></div>
