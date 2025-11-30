@@ -1,4 +1,4 @@
-import { useTheme } from '../../context/ThemeContext'
+import { motion } from 'framer-motion'
 
 export const Card = ({
   children,
@@ -8,18 +8,21 @@ export const Card = ({
   hoverable = false,
   ...props
 }) => {
-  const { isDark } = useTheme()
-
   const baseStyles = 'rounded-lg overflow-hidden'
-  const bgStyles = isDark ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'
-  const borderStyles = isDark ? 'border border-gray-700' : 'border border-gray-200'
-  const hoverStyles = hoverable ? 'hover:shadow-lg transition-shadow duration-300' : ''
-  const shadowStyles = 'shadow'
+  const bgStyles = 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+  const borderStyles = 'border border-gray-200 dark:border-gray-700'
+  const hoverStyles = hoverable ? 'cursor-pointer' : ''
+  const shadowStyles = 'shadow-sm dark:shadow-none'
 
   return (
-    <div className={`${baseStyles} ${bgStyles} ${borderStyles} ${shadowStyles} ${hoverStyles} ${className}`} {...props}>
+    <motion.div 
+      className={`${baseStyles} ${bgStyles} ${borderStyles} ${shadowStyles} ${hoverStyles} ${className}`}
+      whileHover={hoverable ? { y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" } : {}}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      {...props}
+    >
       {header && (
-        <div className={`px-6 py-4 ${isDark ? 'border-b border-gray-700' : 'border-b border-gray-200'}`}>
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           {typeof header === 'string' ? <h3 className="text-lg font-semibold">{header}</h3> : header}
         </div>
       )}
@@ -27,10 +30,10 @@ export const Card = ({
       <div className="px-6 py-4">{children}</div>
 
       {footer && (
-        <div className={`px-6 py-4 ${isDark ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
-          {typeof footer === 'string' ? <p className="text-sm">{footer}</p> : footer}
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          {typeof footer === 'string' ? <p className="text-sm text-gray-500 dark:text-gray-400">{footer}</p> : footer}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }

@@ -1,5 +1,5 @@
-import { useTheme } from '../../context/ThemeContext'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect } from 'react'
 
 export const Modal = ({
   isOpen,
@@ -11,9 +11,17 @@ export const Modal = ({
   closeButton = true,
   ...props
 }) => {
-  const { isDark } = useTheme()
-
-  if (!isOpen) return null
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
 
   const sizeStyles = {
     sm: 'max-w-sm',
@@ -26,58 +34,69 @@ export const Modal = ({
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
+    exit: { opacity: 0 }
   }
 
   const modalVariants = {
-    hidden: { scale: 0.9, opacity: 0, y: 20 },
+    hidden: { scale: 0.95, opacity: 0, y: 20 },
     visible: { scale: 1, opacity: 1, y: 0 },
+    exit: { scale: 0.95, opacity: 0, y: 20 }
   }
 
   return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      variants={overlayVariants}
-      initial="hidden"
-      animate="visible"
-      exit="hidden"
-    >
-      {/* Backdrop */}
-      <motion.div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        variants={overlayVariants}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
+          {/* Backdrop */}
+          <motion.div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+            variants={overlayVariants}
+            transition={{ duration: 0.2 }}
+          />
 
-      {/* Modal */}
-      <motion.div
-        className={`relative ${sizeStyles[size]} w-full mx-4 ${isDark ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'} rounded-lg shadow-xl`}
-        variants={modalVariants}
-        onClick={(e) => e.stopPropagation()}
-        {...props}
-      >
-        {/* Header */}
-        <div className={`flex items-center justify-between px-6 py-4 ${isDark ? 'border-b border-gray-700' : 'border-b border-gray-200'}`}>
-          <h2 className="text-xl font-semibold">{title}</h2>
-          {closeButton && (
-            <button
-              onClick={onClose}
-              className={`text-2xl leading-none font-bold ${isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              ×
-            </button>
-          )}
-        </div>
+          {/* Modal */}
+          <motion.div
+            className={`relative ${sizeStyles[size]} w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]`}
+            variants={modalVariants}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            {...props}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 shrink-0">
+              <h2 className="text-xl font-semibold">{title}</h2>
+              {closeButton && (
+                <button
+                  onClick={onClose}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-        {/* Body */}
-        <div className="px-6 py-4">{children}</div>
+            {/* Body */}
+            <div className="px-6 py-4 overflow-y-auto custom-scrollbar">
+              {children}
+            </div>
 
-        {/* Footer */}
-        {footer && (
-          <div className={`px-6 py-4 ${isDark ? 'border-t border-gray-700' : 'border-t border-gray-200'}`}>
-            {footer}
-          </div>
-        )}
-      </motion.div>
-    </motion.div>
+            {/* Footer */}
+            {footer && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
+                {footer}
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

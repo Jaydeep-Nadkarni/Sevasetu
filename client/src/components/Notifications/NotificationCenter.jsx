@@ -84,17 +84,19 @@ const NotificationCenter = () => {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-orange-500 transition-colors rounded-full hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        className="relative p-2 text-gray-600 hover:text-primary transition-colors rounded-full hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <Bell size={24} />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full border-2 border-white dark:border-gray-900">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-      </button>
+      </motion.button>
 
       <AnimatePresence>
         {isOpen && (
@@ -105,12 +107,12 @@ const NotificationCenter = () => {
             transition={{ duration: 0.2 }}
             className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 border border-gray-200 dark:border-gray-700"
           >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-              <h3 className="font-semibold text-gray-800 dark:text-white">Notifications</h3>
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+              <h3 className="font-bold text-gray-900 dark:text-white">Notifications</h3>
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-xs text-orange-500 hover:text-orange-600 font-medium flex items-center gap-1"
+                  className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors"
                 >
                   <Check size={14} /> Mark all read
                 </button>
@@ -119,7 +121,7 @@ const NotificationCenter = () => {
 
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               {isLoading ? (
-                <div className="p-8 text-center text-gray-500">Loading...</div>
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">Loading...</div>
               ) : notifications.length === 0 ? (
                 <div className="p-8 text-center text-gray-500 dark:text-gray-400 flex flex-col items-center">
                   <Bell size={48} className="mb-2 opacity-20" />
@@ -128,10 +130,11 @@ const NotificationCenter = () => {
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {notifications.map((notification) => (
-                    <div
+                    <motion.div
                       key={notification._id}
-                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors relative group ${
-                        !notification.isRead ? 'bg-orange-50 dark:bg-gray-800/50' : ''
+                      layout
+                      className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors relative group ${
+                        !notification.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''
                       }`}
                     >
                       <div className="flex gap-3">
@@ -139,10 +142,10 @@ const NotificationCenter = () => {
                           {getIcon(notification.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          <p className={`text-sm font-medium truncate ${!notification.isRead ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
                             {notification.title}
                           </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-0.5 line-clamp-2">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 line-clamp-2">
                             {notification.message}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
@@ -152,7 +155,7 @@ const NotificationCenter = () => {
                         {!notification.isRead && (
                           <button
                             onClick={(e) => handleMarkAsRead(notification._id, e)}
-                            className="text-orange-500 hover:text-orange-600 p-1 rounded-full hover:bg-orange-100 dark:hover:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="text-primary hover:text-primary-dark p-1 rounded-full hover:bg-blue-100 dark:hover:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Mark as read"
                           >
                             <Check size={16} />
@@ -160,16 +163,16 @@ const NotificationCenter = () => {
                         )}
                       </div>
                       {!notification.isRead && (
-                        <div className="absolute top-4 right-4 w-2 h-2 bg-orange-500 rounded-full group-hover:hidden"></div>
+                        <div className="absolute top-4 right-4 w-2 h-2 bg-primary rounded-full group-hover:hidden"></div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
             </div>
             
-            <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-center">
-              <button className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+            <div className="p-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 text-center">
+              <button className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 View all history
               </button>
             </div>
