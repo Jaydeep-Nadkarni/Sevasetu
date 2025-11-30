@@ -11,6 +11,7 @@ import donationRoutes from './routes/donationRoutes.js'
 import eventRoutes from './routes/eventRoutes.js'
 import attendanceRoutes from './routes/attendance.js'
 import helpRequestRoutes from './routes/helpRequestRoutes.js'
+import ngoRoutes from './routes/ngoRoutes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -84,6 +85,9 @@ app.use('/api/attendance', attendanceRoutes)
 
 // Help Request routes
 app.use('/api/help-requests', helpRequestRoutes)
+
+// NGO routes
+app.use('/api/ngos', ngoRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
