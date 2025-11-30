@@ -1,39 +1,60 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
+import { useQuery } from 'react-query'
 import { showNotification } from '../../store/slices/notificationSlice'
+import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'
 import { motion } from 'framer-motion'
 
 const DonationHistory = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const [donations, setDonations] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { socket, invalidateQueries } = useSocket()
   const [selectedDonation, setSelectedDonation] = useState(null)
   const [statusFilter, setStatusFilter] = useState('all')
   const [cancellingId, setCancellingId] = useState(null)
 
-  // Fetch donations
-  useEffect(() => {
-    fetchDonations()
-  }, [])
-
-  const fetchDonations = async () => {
-    try {
-      setLoading(true)
+  // Fetch donations with React Query
+  const { data: donations = [], isLoading, refetch } = useQuery(
+    ['my-donations'],
+    async () => {
       const response = await api.get('/donations/my')
-      setDonations(response.data.donations || response.data)
-    } catch (error) {
-      console.error('Fetch donations error:', error)
-      dispatch(showNotification({
-        message: error.response?.data?.message || '❌ Failed to fetch donations',
-        type: 'error',
-      }))
-    } finally {
-      setLoading(false)
+      return response.data.donations || response.data
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      onError: (error) => {
+        dispatch(showNotification({
+          message: error.response?.data?.message || '❌ Failed to fetch donations',
+          type: 'error',
+        }))
+      }
     }
-  }
+  )
+
+  // Socket.IO listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleDonationUpdate = () => {
+      invalidateQueries('my-donations')
+      refetch()
+    }
+
+    socket.on('donation:created', handleDonationUpdate)
+    socket.on('donation:updated', handleDonationUpdate)
+    socket.on('donation:accepted', handleDonationUpdate)
+    socket.on('donation:cancelled', handleDonationUpdate)
+
+    return () => {
+      socket.off('donation:created', handleDonationUpdate)
+      socket.off('donation:updated', handleDonationUpdate)
+      socket.off('donation:accepted', handleDonationUpdate)
+      socket.off('donation:cancelled', handleDonationUpdate)
+    }
+  }, [socket, invalidateQueries, refetch])
 
   // Cancel donation
   const handleCancelDonation = async donationId => {
@@ -46,7 +67,9 @@ const DonationHistory = () => {
         message: '✅ Donation cancelled successfully',
         type: 'success',
       }))
-      setDonations(donations.filter(d => d._id !== donationId))
+      // Invalidate cache to trigger refetch
+      invalidateQueries('my-donations')
+      refetch()
       setSelectedDonation(null)
     } catch (error) {
       dispatch(showNotification({
@@ -86,7 +109,7 @@ const DonationHistory = () => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <div className="animate-spin">

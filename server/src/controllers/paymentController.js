@@ -92,102 +92,160 @@ export const verifyPayment = asyncHandler(async (req, res) => {
   const isAuthentic = expectedSignature === razorpay_signature
 
   if (isAuthentic) {
-    // 1. Update Transaction
-    const transaction = await Transaction.findOne({ razorpayOrderId: razorpay_order_id })
-    
-    if (!transaction) {
-      return errorResponse(res, 'Transaction not found', 404)
-    }
+    try {
+      // 1. Update Transaction
+      const transaction = await Transaction.findOne({ razorpayOrderId: razorpay_order_id })
+      
+      if (!transaction) {
+        return errorResponse(res, 'Transaction not found', 404)
+      }
 
-    transaction.status = 'completed'
-    transaction.razorpayPaymentId = razorpay_payment_id
-    transaction.razorpaySignature = razorpay_signature
-    transaction.paymentMethod = 'upi' // Ideally fetch from Razorpay payment details
-    await transaction.save()
+      transaction.status = 'completed'
+      transaction.razorpayPaymentId = razorpay_payment_id
+      transaction.razorpaySignature = razorpay_signature
+      transaction.paymentMethod = 'upi' // Ideally fetch from Razorpay payment details
+      await transaction.save()
 
-    // 2. Create Donation Record
-    const donation = await Donation.create({
-      donor: req.user._id,
-      ngo: transaction.ngo,
-      amount: transaction.amount,
-      currency: transaction.currency,
-      type: 'monetary',
-      status: 'completed',
-      transaction: transaction._id,
-      paymentMethod: 'online',
-      razorpayPaymentId: razorpay_payment_id,
-      razorpayOrderId: razorpay_order_id,
-      isAnonymous: isAnonymous || false,
-      notes: notes || transaction.notes
-    })
+      // 2. Create Donation Record
+      const donation = await Donation.create({
+        donor: req.user._id,
+        ngo: transaction.ngo,
+        amount: transaction.amount,
+        currency: transaction.currency,
+        type: 'monetary',
+        status: 'completed',
+        transaction: transaction._id,
+        paymentMethod: 'online',
+        razorpayPaymentId: razorpay_payment_id,
+        razorpayOrderId: razorpay_order_id,
+        isAnonymous: isAnonymous || false,
+        notes: notes || transaction.notes
+      })
 
-    // Update transaction with donation ref
-    transaction.donation = donation._id
-    await transaction.save()
+      // Update transaction with donation ref
+      transaction.donation = donation._id
+      await transaction.save()
 
-    // 3. Award Points
-    const points = calculateDonationPoints('money', transaction.amount)
-    const pointsResult = await addPoints(req.user._id, points, 'donation')
+      // 3. Award Points
+      const io = req.app.get('io')
+      const points = calculateDonationPoints('money', transaction.amount)
+      const pointsResult = await addPoints(req.user._id, points, 'donation', io)
 
-    // 4. Send Notification & Email
-    const io = req.app.get('io')
-    if (io) {
-        // Fetch NGO name
-        const ngo = await NGO.findById(transaction.ngo)
-        const ngoName = ngo ? ngo.name : 'SevaSetu Platform'
+      // 4. Fetch NGO name and user for notifications
+      const ngo = await NGO.findById(transaction.ngo)
+      const ngoName = ngo ? ngo.name : 'SevaSetu Platform'
+      const user = await User.findById(req.user._id)
 
+      // 5. Send Notifications & Emails
+      if (io && user) {
+        // Main donation success notification
         await sendNotification(io, {
-            recipientId: req.user._id,
-            type: 'donation_update',
-            title: 'Payment Successful',
-            message: `Thank you! Your donation of ${transaction.currency} ${transaction.amount} was successful.`,
-            data: {
-                transactionId: transaction._id,
-                donationId: donation._id,
-                pointsEarned: points,
-                levelUp: pointsResult.levelUp
-            },
-            emailTemplate: 'payment_receipt',
-            emailData: {
-                amount: transaction.amount,
-                currency: transaction.currency,
-                transactionId: razorpay_payment_id,
-                date: new Date().toLocaleDateString(),
-                ngoName: ngoName,
-                paymentMethod: 'Online',
-                points: points
-            }
+          recipientId: req.user._id,
+          type: 'donation_update',
+          title: 'Payment Successful',
+          message: `Thank you! Your donation of ₹${transaction.amount} to ${ngoName} was successful.`,
+          data: {
+            transactionId: transaction._id,
+            donationId: donation._id,
+            pointsEarned: points,
+            levelUp: pointsResult.levelUp,
+            newLevel: pointsResult.newLevel,
+            ngoName,
+            amount: transaction.amount
+          },
+          emailTemplate: 'payment_receipt',
+          emailData: {
+            amount: transaction.amount,
+            currency: transaction.currency,
+            transactionId: razorpay_payment_id,
+            date: new Date().toLocaleDateString(),
+            ngoName: ngoName,
+            paymentMethod: 'Online',
+            points: points
+          }
         })
 
-        // Send Certificate Email if earned
+        // Level up certificate notification
         if (pointsResult.newCertificate) {
-            await sendNotification(io, {
-                recipientId: req.user._id,
-                type: 'certificate_earned',
-                title: 'New Certificate Earned!',
-                message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
-                data: {
-                    certificateId: pointsResult.newCertificate._id,
-                    certificateUrl: pointsResult.newCertificate.certificateUrl
-                },
-                emailTemplate: 'certificate_issued',
-                emailData: {
-                    recipientName: req.user.firstName,
-                    certificateTitle: pointsResult.newCertificate.title,
-                    issueDate: new Date().toLocaleDateString(),
-                    certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
-                }
-            })
+          await sendNotification(io, {
+            recipientId: req.user._id,
+            type: 'certificate_earned',
+            title: 'New Certificate Earned!',
+            message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+            data: {
+              certificateId: pointsResult.newCertificate._id,
+              certificateUrl: pointsResult.newCertificate.certificateUrl,
+              title: pointsResult.newCertificate.title
+            },
+            emailTemplate: 'certificate_issued',
+            emailData: {
+              recipientName: user.firstName,
+              certificateTitle: pointsResult.newCertificate.title,
+              issueDate: new Date().toLocaleDateString(),
+              certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+            }
+          })
         }
-    }
 
-    successResponse(res, {
-      transaction,
-      donation,
-      pointsEarned: points,
-      newLevel: pointsResult.newLevel,
-      levelUp: pointsResult.levelUp
-    }, 'Payment verified successfully')
+        // Emit real-time socket events for activity log
+        io.to(`user:${req.user._id}`).emit('activity:new', {
+          type: 'money_donation',
+          description: `Donated ₹${transaction.amount} to ${ngoName}`,
+          amount: transaction.amount,
+          ngoName,
+          status: 'completed',
+          createdAt: new Date(),
+          metadata: {
+            transactionId: transaction._id,
+            donationId: donation._id,
+            ngoId: transaction.ngo,
+            anonymous: isAnonymous || false
+          }
+        })
+
+        // Emit donation event for specific room listeners
+        io.to(`donation:${donation._id}`).emit('donation:completed', {
+          donationId: donation._id,
+          amount: transaction.amount,
+          donorName: isAnonymous ? 'Anonymous' : `${user.firstName} ${user.lastName}`,
+          ngoId: transaction.ngo,
+          ngoName,
+          timestamp: new Date()
+        })
+      }
+
+      // 6. Return comprehensive response
+      successResponse(res, {
+        transaction: {
+          _id: transaction._id,
+          amount: transaction.amount,
+          currency: transaction.currency,
+          status: transaction.status,
+          razorpayPaymentId: transaction.razorpayPaymentId,
+          createdAt: transaction.createdAt
+        },
+        donation: {
+          _id: donation._id,
+          amount: donation.amount,
+          ngoName,
+          status: donation.status,
+          isAnonymous: donation.isAnonymous
+        },
+        pointsEarned: points,
+        newLevel: pointsResult.newLevel,
+        levelUp: pointsResult.levelUp,
+        newBadges: pointsResult.newBadges,
+        newCertificate: pointsResult.newCertificate ? {
+          _id: pointsResult.newCertificate._id,
+          title: pointsResult.newCertificate.title,
+          certificateUrl: pointsResult.newCertificate.certificateUrl
+        } : null
+      }, 'Payment verified successfully')
+
+    } catch (error) {
+      console.error('Payment verification error:', error)
+      return errorResponse(res, 'Error processing payment: ' + error.message, 500)
+    }
 
   } else {
     // Update transaction as failed

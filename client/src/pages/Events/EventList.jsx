@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery, useQueryClient } from 'react-query'
 import axios from 'axios'
 import { motion } from 'framer-motion'
+import { useSocket } from '../../context/SocketContext'
 import {
   Search,
   MapPin,
@@ -15,9 +17,9 @@ import {
 
 const EventList = () => {
   const navigate = useNavigate()
-  const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const queryClient = useQueryClient()
+  const { socket, invalidateQueries } = useSocket()
+  
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -41,16 +43,22 @@ const EventList = () => {
     'other',
   ]
 
-  // Fetch events
-  useEffect(() => {
-    fetchEvents()
-  }, [page, selectedCategory, selectedCity, startDate, endDate, searchQuery])
+  // Build query key based on filters
+  const buildQueryKey = () => {
+    return ['events', { 
+      page, 
+      category: selectedCategory, 
+      city: selectedCity, 
+      startDate, 
+      endDate, 
+      search: searchQuery 
+    }]
+  }
 
-  const fetchEvents = async () => {
-    try {
-      setLoading(true)
-      setError('')
-
+  // Fetch events with React Query
+  const { data, isLoading, error, refetch } = useQuery(
+    buildQueryKey(),
+    async () => {
       const params = new URLSearchParams({
         page,
         limit: 12,
@@ -63,15 +71,36 @@ const EventList = () => {
       if (searchQuery) params.append('search', searchQuery)
 
       const response = await axios.get(`/api/events?${params}`)
-      setEvents(response.data.events || [])
       setTotalPages(response.data.pagination?.total || 1)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch events')
-      console.error('Error fetching events:', err)
-    } finally {
-      setLoading(false)
+      return response.data.events || []
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     }
-  }
+  )
+
+  const events = data || []
+
+  // Socket.IO listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleEventUpdate = () => {
+      invalidateQueries('events')
+      refetch()
+    }
+
+    socket.on('event:created', handleEventUpdate)
+    socket.on('event:updated', handleEventUpdate)
+    socket.on('event:deleted', handleEventUpdate)
+
+    return () => {
+      socket.off('event:created', handleEventUpdate)
+      socket.off('event:updated', handleEventUpdate)
+      socket.off('event:deleted', handleEventUpdate)
+    }
+  }, [socket, invalidateQueries, refetch])
 
   const handleResetFilters = () => {
     setSearchQuery('')
@@ -259,19 +288,19 @@ const EventList = () => {
             className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3"
           >
             <AlertCircle className="w-5 h-5 text-red-600" />
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700">{error.message || 'Failed to fetch events'}</p>
           </motion.div>
         )}
 
         {/* Loading State */}
-        {loading && (
+        {isLoading && (
           <div className="flex justify-center items-center py-12">
             <Loader className="w-8 h-8 text-blue-600 animate-spin" />
           </div>
         )}
 
         {/* Events Grid */}
-        {!loading && events.length > 0 && (
+        {!isLoading && events.length > 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -393,7 +422,7 @@ const EventList = () => {
         )}
 
         {/* Empty State */}
-        {!loading && events.length === 0 && (
+        {!isLoading && events.length === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

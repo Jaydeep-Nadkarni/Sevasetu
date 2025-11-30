@@ -83,3 +83,109 @@ export const getUserProgress = asyncHandler(async (req, res) => {
     pointsToNext
   }, 'User progress fetched')
 })
+
+/**
+ * Get user's recent activity (donations, events, certificates, transactions)
+ */
+export const getUserActivity = asyncHandler(async (req, res) => {
+  const { limit = 10 } = req.query
+  const userId = req.user._id
+
+  // Dynamically import models to avoid circular dependencies
+  const { Donation, Event, Certificate, Transaction } = await import('../models/index.js')
+  
+  // Fetch different types of activities in parallel
+  const [donations, events, certificates, transactions] = await Promise.all([
+    // Recent donations made by user
+    Donation.find({ donor: userId })
+      .select('itemName ngo createdAt status')
+      .populate('ngo', 'name')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean(),
+    
+    // Recent events attended/joined by user
+    Event.find({ attendees: userId })
+      .select('title createdAt updatedAt')
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean(),
+    
+    // Recent certificates earned
+    Certificate.find({ earnedBy: userId })
+      .select('title createdAt')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean(),
+    
+    // Recent transactions/money donations
+    Transaction.find({ user: userId })
+      .select('amount ngo status createdAt')
+      .populate('ngo', 'name')
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean(),
+  ])
+
+  // Transform and combine activities
+  const activities = []
+
+  // Add donations
+  donations.forEach((donation) => {
+    activities.push({
+      _id: `donation-${donation._id}`,
+      type: 'donation',
+      description: `Donated ${donation.itemName || 'items'} to ${donation.ngo?.name || 'an NGO'}`,
+      itemName: donation.itemName,
+      ngoName: donation.ngo?.name,
+      status: donation.status,
+      createdAt: donation.createdAt,
+    })
+  })
+
+  // Add events
+  events.forEach((event) => {
+    activities.push({
+      _id: `event-${event._id}`,
+      type: 'event_attended',
+      description: `Attended event: ${event.title}`,
+      eventName: event.title,
+      createdAt: event.updatedAt,
+    })
+  })
+
+  // Add certificates
+  certificates.forEach((cert) => {
+    activities.push({
+      _id: `cert-${cert._id}`,
+      type: 'certificate',
+      description: `Earned certificate: ${cert.title}`,
+      certificateName: cert.title,
+      createdAt: cert.createdAt,
+    })
+  })
+
+  // Add money donations/transactions
+  transactions.forEach((transaction) => {
+    activities.push({
+      _id: `transaction-${transaction._id}`,
+      type: 'money_donation',
+      description: `Donated ₹${transaction.amount} to ${transaction.ngo?.name || 'an NGO'}`,
+      amount: transaction.amount,
+      ngoName: transaction.ngo?.name,
+      status: transaction.status,
+      createdAt: transaction.createdAt,
+    })
+  })
+
+  // Sort by createdAt (newest first) and limit
+  activities.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  const limitedActivities = activities.slice(0, parseInt(limit))
+
+  successResponse(
+    res,
+    { activities: limitedActivities },
+    'User activities fetched successfully'
+  )
+})
+

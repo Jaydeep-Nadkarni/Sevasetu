@@ -2,13 +2,16 @@ import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import ImageUpload from '../../components/ImageUpload'
+import RecommendationWidget from '../../components/Recommendations/RecommendationWidget'
 import { showNotification } from '../../store/slices/notificationSlice'
+import { useTheme } from '../../context/ThemeContext'
 import api from '../../utils/api'
 import { motion } from 'framer-motion'
 
 const CreateDonation = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { isDark } = useTheme()
   const [loading, setLoading] = useState(false)
   const [latitude, setLatitude] = useState(null)
   const [longitude, setLongitude] = useState(null)
@@ -579,6 +582,25 @@ const CreateDonation = () => {
                 />
               </div>
             </div>
+
+            {/* Nearby NGOs Recommendations Section */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="border-t border-gray-200 dark:border-gray-700 pt-8"
+            >
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+                🎯 Nearby Organizations Looking for Your Items
+              </h2>
+              <p className={`mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Based on your location and the donation type, here are verified NGOs nearby that could benefit:
+              </p>
+              <RecommendationWidget 
+                type="nearbyNGOs" 
+                title="NGOs Near You"
+              />
+            </motion.div>
 
             {/* Submit Button */}
             <div className="border-t border-gray-200 dark:border-gray-700 pt-8 flex gap-4">

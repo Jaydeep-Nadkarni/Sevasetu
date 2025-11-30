@@ -1,29 +1,65 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useQuery } from 'react-query'
 import { Trophy, Star, Award, TrendingUp, Clock, Target } from 'lucide-react'
+import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'
 import { toast } from 'react-hot-toast'
 
 const Progress = () => {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { socket, invalidateQueries } = useSocket()
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      try {
-        const { data } = await api.get('/users/progress')
-        setStats(data.data)
-      } catch (error) {
+  // Fetch progress with React Query
+  const { data: stats, isLoading, refetch } = useQuery(
+    ['progress'],
+    async () => {
+      const { data } = await api.get('/users/progress')
+      return data.data
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      onError: (error) => {
         console.error('Error fetching progress:', error)
         toast.error('Failed to load progress')
-      } finally {
-        setLoading(false)
       }
     }
-    fetchProgress()
-  }, [])
+  )
 
-  if (loading) {
+  // Socket.IO listeners for real-time points and badge updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handlePointsEarned = (data) => {
+      console.log('Points earned event received:', data)
+      // Invalidate progress cache to trigger refetch
+      invalidateQueries('progress')
+      refetch()
+
+      if (data.levelUp) {
+        toast(`Level Up! 🎉 You reached ${data.newLevel}!`, {
+          icon: '⭐',
+          duration: 4000,
+          position: 'top-right'
+        })
+      }
+    }
+
+    const handleBadgeEarned = () => {
+      invalidateQueries('progress')
+      refetch()
+    }
+
+    socket.on('points:earned', handlePointsEarned)
+    socket.on('badge:earned', handleBadgeEarned)
+
+    return () => {
+      socket.off('points:earned', handlePointsEarned)
+      socket.off('badge:earned', handleBadgeEarned)
+    }
+  }, [socket, invalidateQueries, refetch])
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

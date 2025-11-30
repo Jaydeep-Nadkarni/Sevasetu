@@ -30,7 +30,7 @@ export const Login = () => {
     if (result.payload?.user?.role) {
       const role = result.payload.user.role
       if (role === 'user') {
-        navigate('/dashboard')
+        navigate('/user/dashboard')
       } else if (role === 'ngo_admin') {
         navigate('/ngo/dashboard')
       } else if (role === 'admin') {

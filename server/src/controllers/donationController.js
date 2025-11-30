@@ -490,10 +490,10 @@ export const completePickup = asyncHandler(async (req, res) => {
     else if (category.includes('cloth')) pointsType = 'clothes'
     
     const points = calculateDonationPoints(pointsType, donation.items.quantity)
-    const pointsResult = await addPoints(donation.donor, points, 'donation')
+    const io = req.app.get('io')
+    const pointsResult = await addPoints(donation.donor, points, 'donation', io)
 
     // Send notification to donor
-    const io = req.app.get('io')
     await sendNotification(io, {
       recipientId: donation.donor,
       type: 'donation_update',

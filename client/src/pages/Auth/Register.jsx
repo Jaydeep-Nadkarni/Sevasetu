@@ -86,41 +86,67 @@ export const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
     const validationError = validateForm()
     if (validationError) {
+      console.error('Validation error:', validationError)
       return
     }
 
-    let result
-    if (selectedRole === 'user') {
-      result = await register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        role: 'user',
-      })
-    } else {
-      result = await registerNGO({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        ngo: formData.ngo,
-      })
-    }
-
-    if (result.payload?.user?.role) {
-      const role = result.payload.user.role
-      if (role === 'user') {
-        navigate('/dashboard')
-      } else if (role === 'ngo_admin') {
-        navigate('/ngo/dashboard')
-      } else if (role === 'admin') {
-        navigate('/admin/dashboard')
+    try {
+      let result
+      if (selectedRole === 'user') {
+        console.log('Registering user with data:', {
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+        })
+        result = await register({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          role: 'user',
+        })
+      } else {
+        console.log('Registering NGO with data:', {
+          email: formData.email,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          ngo: formData.ngo,
+        })
+        result = await registerNGO({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          ngo: formData.ngo,
+        })
       }
+
+      console.log('Registration result:', result)
+
+      // Check if registration was successful
+      if (result.type.endsWith('/fulfilled')) {
+        const role = result.payload?.user?.role
+        console.log('Registration successful, role:', role)
+        if (role === 'user') {
+          navigate('/user/dashboard')
+        } else if (role === 'ngo_admin') {
+          navigate('/ngo/dashboard')
+        } else if (role === 'admin') {
+          navigate('/admin/dashboard')
+        } else {
+          navigate('/user/dashboard')
+        }
+      } else if (result.type.endsWith('/rejected')) {
+        console.error('Registration rejected:', result.payload)
+      }
+    } catch (err) {
+      console.error('Registration error:', err)
     }
   }
 

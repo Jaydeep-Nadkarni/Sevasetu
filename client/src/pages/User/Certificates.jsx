@@ -1,29 +1,48 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useQuery } from 'react-query'
 import { Award, Download, ExternalLink, Calendar, CheckCircle } from 'lucide-react'
+import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'
 import { toast } from 'react-hot-toast'
 
 const Certificates = () => {
-  const [certificates, setCertificates] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { socket, invalidateQueries } = useSocket()
 
-  useEffect(() => {
-    const fetchCertificates = async () => {
-      try {
-        const { data } = await api.get('/certificates/my-certificates')
-        setCertificates(data.data)
-      } catch (error) {
+  // Fetch certificates with React Query
+  const { data: certificates = [], isLoading, refetch } = useQuery(
+    ['my-certificates'],
+    async () => {
+      const { data } = await api.get('/certificates/my-certificates')
+      return data.data
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      onError: (error) => {
         console.error('Error fetching certificates:', error)
         toast.error('Failed to load certificates')
-      } finally {
-        setLoading(false)
       }
     }
-    fetchCertificates()
-  }, [])
+  )
 
-  if (loading) {
+  // Socket.IO listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleCertificateEarned = () => {
+      invalidateQueries('my-certificates')
+      refetch()
+    }
+
+    socket.on('certificate:earned', handleCertificateEarned)
+
+    return () => {
+      socket.off('certificate:earned', handleCertificateEarned)
+    }
+  }, [socket, invalidateQueries, refetch])
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

@@ -11,17 +11,31 @@ const __dirname = path.dirname(__filename);
 
 // Initialize Email Queue
 // If REDIS_HOST is not set, we might want to warn or fallback, but for now we assume it's needed for Bull
-const emailQueue = new Queue('email', {
-  redis: config.redis,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 1000,
+let emailQueue;
+let queueEnabled = true;
+
+try {
+  emailQueue = new Queue('email', {
+    redis: config.redis,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
+      removeOnComplete: true,
     },
-    removeOnComplete: true,
-  },
-});
+  });
+  
+  // Test Redis connection
+  emailQueue.on('error', (error) => {
+    console.error('Email queue error (Redis connection failed):', error.message);
+    queueEnabled = false;
+  });
+} catch (error) {
+  console.error('Failed to initialize email queue:', error.message);
+  queueEnabled = false;
+}
 
 // Initialize Transporter
 const transporter = nodemailer.createTransport({
@@ -59,37 +73,59 @@ const compileTemplate = async (templateName, data) => {
 /**
  * Process email jobs
  */
-emailQueue.process(async (job) => {
-  const { to, subject, template, data } = job.data;
+if (emailQueue) {
+  emailQueue.process(async (job) => {
+    const { to, subject, template, data } = job.data;
 
+    try {
+      console.log(`Processing email job for ${to} (Template: ${template})`);
+      
+      const html = await compileTemplate(template, data);
+
+      const info = await transporter.sendMail({
+        from: config.from,
+        to,
+        subject,
+        html,
+      });
+
+      console.log(`Email sent to ${to}: ${info.messageId}`);
+      return { messageId: info.messageId };
+    } catch (error) {
+      console.error(`Failed to send email to ${to}:`, error);
+      throw error; // Triggers Bull retry
+    }
+  });
+
+  // Handle Queue Events
+  emailQueue.on('completed', (job, result) => {
+    console.log(`Job ${job.id} completed! Result: ${result.messageId}`);
+  });
+
+  emailQueue.on('failed', (job, err) => {
+    console.error(`Job ${job.id} failed! Error: ${err.message}`);
+  });
+}
+
+/**
+ * Send email directly without queue (fallback)
+ */
+const sendEmailDirect = async (to, subject, template, data) => {
   try {
-    console.log(`Processing email job for ${to} (Template: ${template})`);
-    
     const html = await compileTemplate(template, data);
-
     const info = await transporter.sendMail({
       from: config.from,
       to,
       subject,
       html,
     });
-
-    console.log(`Email sent to ${to}: ${info.messageId}`);
-    return { messageId: info.messageId };
+    console.log(`Email sent directly to ${to}: ${info.messageId}`);
+    return true;
   } catch (error) {
-    console.error(`Failed to send email to ${to}:`, error);
-    throw error; // Triggers Bull retry
+    console.error(`Failed to send email directly to ${to}:`, error);
+    return false;
   }
-});
-
-// Handle Queue Events
-emailQueue.on('completed', (job, result) => {
-  console.log(`Job ${job.id} completed! Result: ${result.messageId}`);
-});
-
-emailQueue.on('failed', (job, err) => {
-  console.error(`Job ${job.id} failed! Error: ${err.message}`);
-});
+};
 
 /**
  * Add email to queue
@@ -100,25 +136,25 @@ emailQueue.on('failed', (job, err) => {
  * @param {object} options - Bull job options (optional)
  */
 export const sendEmail = async (to, subject, template, data, options = {}) => {
-  // Check if user has opted out of this type of email (if we had types)
-  // For now, we assume critical emails or check preferences before calling this function
-  
-  // In development without Redis, we might want to bypass queue or mock it
-  // But per requirements, we use the queue.
-  
-  try {
-    await emailQueue.add({
-      to,
-      subject,
-      template,
-      data,
-    }, options);
-    return true;
-  } catch (error) {
-    console.error('Error adding email to queue:', error);
-    // Fallback to direct send if queue fails (e.g. Redis down)?
-    // For now, just log error.
-    return false;
+  // Check if queue is enabled and working
+  if (queueEnabled && emailQueue) {
+    try {
+      await emailQueue.add({
+        to,
+        subject,
+        template,
+        data,
+      }, options);
+      return true;
+    } catch (error) {
+      console.error('Error adding email to queue, falling back to direct send:', error.message);
+      // Fallback to direct send
+      return await sendEmailDirect(to, subject, template, data);
+    }
+  } else {
+    // Queue not available, send directly
+    console.log('Email queue not available, sending email directly');
+    return await sendEmailDirect(to, subject, template, data);
   }
 };
 

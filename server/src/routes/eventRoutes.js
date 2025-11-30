@@ -14,7 +14,7 @@ import {
   getPendingEvents,
   uploadEventImage,
 } from '../controllers/eventController.js'
-import { upload } from '../middleware/upload.js'
+import { uploadSingle } from '../middleware/upload.js'
 
 const router = express.Router()
 
@@ -23,8 +23,8 @@ router.get('/', listEvents)
 router.get('/:id', getEventById)
 
 // Protected routes - requires authentication
-router.post('/', authenticate, upload.single('banner'), createEvent)
-router.patch('/:id', authenticate, upload.single('banner'), updateEvent)
+router.post('/', authenticate, uploadSingle('banner'), createEvent)
+router.patch('/:id', authenticate, uploadSingle('banner'), updateEvent)
 router.delete('/:id', authenticate, deleteEvent)
 
 // Event registration
@@ -38,7 +38,7 @@ router.get('/:id/attendees', authenticate, getEventAttendees)
 router.post('/:id/scan', authenticate, scanQRCode)
 
 // Image upload
-router.post('/:id/upload-image', authenticate, upload.single('image'), uploadEventImage)
+router.post('/:id/upload-image', authenticate, uploadSingle('image'), uploadEventImage)
 
 // Admin routes - requires admin role
 router.post('/:id/approve', authenticate, authorize(['admin']), approveEvent)

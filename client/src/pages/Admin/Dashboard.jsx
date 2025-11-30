@@ -1,154 +1,196 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useTheme } from '../../context/ThemeContext'
-import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
+import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
-import CalendarHeatmap from 'react-calendar-heatmap'
-import 'react-calendar-heatmap/dist/styles.css'
-import { Tooltip } from 'react-tooltip'
-
-const StatCard = ({ icon, label, value, change, isDark }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.3 }}
-  >
-    <Card hoverable className="h-full">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            {label}
-          </p>
-          <p className="text-3xl font-bold mt-2 text-primary">{value}</p>
-          {change && (
-            <p className={`text-sm mt-1 ${change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {change >= 0 ? '+' : ''}{change}% from last month
-            </p>
-          )}
-        </div>
-        <div className="text-4xl">{icon}</div>
-      </div>
-    </Card>
-  </motion.div>
-)
+import { useNavigate } from 'react-router-dom'
+import { RecentActivity } from '../../components/RecentActivity'
 
 export const AdminDashboard = () => {
   const { isDark } = useTheme()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const navigate = useNavigate()
 
-  // Mock Data
-  const stats = [
-    { icon: '💰', label: 'Total Donations', value: '₹12,50,000', change: 15 },
-    { icon: '🏢', label: 'Registered NGOs', value: '120', change: 5 },
-    { icon: '👥', label: 'Total Users', value: '5,430', change: 12 },
-    { icon: '🆘', label: 'Help Requests', value: '850', change: 8 },
-  ]
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  }
 
-  // Heatmap Data (Mock)
-  const today = new Date()
-  const heatmapData = Array.from({ length: 365 }, (_, i) => {
-    const date = new Date(today)
-    date.setDate(date.getDate() - i)
-    return {
-      date: date.toISOString().split('T')[0],
-      count: Math.floor(Math.random() * 10),
-    }
-  }).reverse()
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+  }
 
   return (
-    <div className={`flex h-screen ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <motion.div
+      className="max-w-7xl mx-auto space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
+          Admin Dashboard 🎛️
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Manage platform operations and approvals
+        </p>
+      </motion.div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="md:hidden p-4">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
-        </div>
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants}>
+        <Card header="Quick Actions" className="dark:bg-gray-800">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button 
+              onClick={() => navigate('/admin/ngo-verification')}
+              className="w-full justify-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600"
+            >
+              ✅ NGO Verification
+            </Button>
+            <Button 
+              onClick={() => navigate('/admin/users')}
+              className="w-full justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            >
+              👥 User Management
+            </Button>
+            <Button 
+              onClick={() => navigate('/admin/analytics')}
+              className="w-full justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+            >
+              📊 Analytics
+            </Button>
+          </div>
+        </Card>
+      </motion.div>
 
-        <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {stats.map((stat, index) => (
-                <StatCard key={index} {...stat} isDark={isDark} />
-              ))}
-            </div>
-
-            {/* Activity Heatmap */}
-            <Card header="Platform Activity (Last 365 Days)" className="mb-8">
-              <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
-                  <CalendarHeatmap
-                    startDate={new Date(today.getFullYear(), today.getMonth() - 11, 1)}
-                    endDate={today}
-                    values={heatmapData}
-                    classForValue={(value) => {
-                      if (!value) {
-                        return 'color-empty'
-                      }
-                      return `color-scale-${Math.min(value.count, 4)}`
-                    }}
-                    tooltipDataAttrs={(value) => {
-                      return {
-                        'data-tooltip-id': 'heatmap-tooltip',
-                        'data-tooltip-content': `${value.date}: ${value.count || 0} activities`,
-                      }
-                    }}
-                    showWeekdayLabels
-                  />
-                  <Tooltip id="heatmap-tooltip" />
+      {/* Two Column Layout: Pending Actions + System Stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Pending Actions */}
+        <motion.div variants={itemVariants} className="lg:col-span-2">
+          <Card header="Pending Approvals" className="dark:bg-gray-800">
+            <div className="space-y-4">
+              {/* Pending NGO Approvals */}
+              <div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span>🏢</span> NGO Verification Pending
+                </h4>
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={`ngo-${i}`} className={`p-4 rounded-lg border ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    } cursor-pointer transition-all`}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white">Hope Foundation {i}</p>
+                          <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            Applied 2 days ago • {['Education', 'Healthcare', 'Environment'][i % 3]}
+                          </p>
+                        </div>
+                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700">
+                          Review
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <style>{`
-                .react-calendar-heatmap text {
-                  font-size: 10px;
-                  fill: ${isDark ? '#aaa' : '#333'};
-                }
-                .react-calendar-heatmap .color-empty {
-                  fill: ${isDark ? '#374151' : '#ebedf0'};
-                }
-                .react-calendar-heatmap .color-scale-1 { fill: #d6e685; }
-                .react-calendar-heatmap .color-scale-2 { fill: #8cc665; }
-                .react-calendar-heatmap .color-scale-3 { fill: #44a340; }
-                .react-calendar-heatmap .color-scale-4 { fill: #1e6823; }
-              `}</style>
-            </Card>
 
-            {/* Recent Pending Actions */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <Card header="Pending NGO Approvals">
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className={`flex items-center justify-between p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                      <div>
-                        <p className="font-medium">Hope Foundation {i}</p>
-                        <p className="text-xs opacity-70">Applied 2 days ago</p>
+              {/* Pending Event Approvals */}
+              <div className={`pt-4 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span>🎉</span> Event Approvals Pending
+                </h4>
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={`event-${i}`} className={`p-4 rounded-lg border ${
+                      isDark 
+                        ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    } cursor-pointer transition-all`}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white">Community Clean-up {i}</p>
+                          <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            By Organization • {1 + i} day{1 + i > 1 ? 's' : ''} ago
+                          </p>
+                        </div>
+                        <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          Review
+                        </Button>
                       </div>
-                      <button className="text-blue-500 text-sm font-medium hover:underline">Review</button>
                     </div>
                   ))}
                 </div>
-              </Card>
-
-              <Card header="Pending Event Approvals">
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className={`flex items-center justify-between p-3 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                      <div>
-                        <p className="font-medium">Community Clean-up {i}</p>
-                        <p className="text-xs opacity-70">By John Doe • 1 day ago</p>
-                      </div>
-                      <button className="text-blue-500 text-sm font-medium hover:underline">Review</button>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              </div>
             </div>
-          </div>
-        </main>
+          </Card>
+        </motion.div>
+
+        {/* System Summary */}
+        <motion.div variants={itemVariants}>
+          <Card header="Platform Overview" className="dark:bg-gray-800 h-full">
+            <div className="space-y-4">
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-indigo-50'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-indigo-700'}`}>
+                  Total Donations
+                </p>
+                <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 mt-2">
+                  ₹12,50,000
+                </p>
+              </div>
+
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-blue-700'}`}>
+                  Registered NGOs
+                </p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                  120
+                </p>
+              </div>
+
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-green-50'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-green-700'}`}>
+                  Active Users
+                </p>
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
+                  5,430
+                </p>
+              </div>
+
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-orange-50'}`}>
+                <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-orange-700'}`}>
+                  Help Requests
+                </p>
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2">
+                  850
+                </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+
+      {/* Recent Activity */}
+      <motion.div variants={itemVariants}>
+        <RecentActivity limit={10} />
+      </motion.div>
+    </motion.div>
   )
 }
 

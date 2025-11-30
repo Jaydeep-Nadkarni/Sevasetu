@@ -1,5 +1,5 @@
 import express from 'express'
-import { protect } from '../middleware/auth.js'
+import { authenticate } from '../middleware/auth.js'
 import { sendMessage, getChatHistory, clearChatHistory } from '../controllers/chatController.js'
 import rateLimit from 'express-rate-limit'
 
@@ -15,7 +15,7 @@ const chatLimiter = rateLimit({
   }
 })
 
-router.use(protect)
+router.use(authenticate)
 router.post('/message', chatLimiter, sendMessage)
 router.get('/history', getChatHistory)
 router.delete('/history', clearChatHistory)

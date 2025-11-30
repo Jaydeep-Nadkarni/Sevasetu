@@ -32,9 +32,10 @@ export const calculateDonationPoints = (type, amount = 1) => {
  * @param {string} userId - User ID
  * @param {number} points - Points to add
  * @param {string} source - Source of points (e.g., 'donation', 'event')
+ * @param {Object} io - Socket.IO instance for real-time updates (optional)
  * @returns {Object} Result with new points, level, and any new badges/certificates
  */
-export const addPoints = async (userId, points, source) => {
+export const addPoints = async (userId, points, source, io = null) => {
   try {
     const user = await User.findById(userId)
     if (!user) throw new Error('User not found')
@@ -67,68 +68,113 @@ export const addPoints = async (userId, points, source) => {
       
       // Assign Badge for the new level
       const levelConfig = LEVELS.find(l => l.level === newLevel)
-      if (levelConfig && levelConfig.badge) {
-        // Check if badge exists in DB, if not create it (or find by name)
-        // For simplicity, we'll assume we look up by name from config
-        // In a real app, you'd seed these badges
+      if (levelConfig) {
+        // Find badge from BADGES config matching the level name
+        const badgeKey = Object.keys(BADGES).find(key => 
+          BADGES[key].name === levelConfig.name
+        )
         
-        // Let's try to find or create the badge based on our config
-        // We map the config badge key to the BADGES object
-        const badgeKey = Object.keys(BADGES).find(key => BADGES[key].name === levelConfig.name)
         if (badgeKey) {
-            const badgeData = BADGES[badgeKey]
-            let badge = await Badge.findOne({ name: badgeData.name })
-            
-            if (!badge) {
-                badge = await Badge.create({
-                    name: badgeData.name,
-                    description: badgeData.description,
-                    icon: badgeData.icon,
-                    category: badgeData.category,
-                    criteria: { type: 'custom', value: levelConfig.minPoints, description: `Reach level ${newLevel}` }
-                })
-            }
+          const badgeData = BADGES[badgeKey]
+          let badge = await Badge.findOne({ name: badgeData.name })
+          
+          // If badge doesn't exist, create it
+          if (!badge) {
+            badge = await Badge.create({
+              name: badgeData.name,
+              description: badgeData.description,
+              icon: badgeData.icon,
+              category: badgeData.category,
+              criteria: { 
+                type: 'level', 
+                value: levelConfig.minPoints, 
+                description: `Reach level ${newLevel}` 
+              }
+            })
+          }
 
-            // Add badge to user if not already there
-            if (!user.badges.includes(badge._id)) {
-                user.badges.push(badge._id)
-                result.newBadges.push(badge)
-            }
+          // Add badge to user if not already there
+          if (!user.badges || !user.badges.includes(badge._id)) {
+            if (!user.badges) user.badges = []
+            user.badges.push(badge._id)
+            result.newBadges.push(badge)
+          }
         }
       }
 
-      // Generate Certificate
-      const certificate = await Certificate.create({
-        recipient: user._id,
-        // We need an issuer. For system awards, we might need a placeholder or leave it null if schema allows.
-        // Since schema requires issuer, let's find the first admin NGO or a system NGO.
-        // For now, we'll try to find a "System" NGO or just pick one if it's a hackathon project.
-        // Better approach: Make issuer optional in schema or use a specific ID.
-        // I'll assume we can find a default NGO or create one.
-        // For this implementation, I'll skip issuer validation if I modify the schema, 
-        // but since I can't easily modify schema without migration in production, 
-        // I'll try to find an NGO.
-        issuer: user.ngoOwned || (await import('../models/NGO.js')).default.findOne().then(n => n?._id), 
-        type: 'achievement',
-        title: `Level Up: ${levelConfig.name}`,
-        description: `Awarded for reaching Level ${newLevel} by earning ${user.points} points.`,
-        issueDate: new Date(),
-        isVerified: true
-      })
-
-      // Generate PDF and update certificate
+      // Generate Certificate if we can find an issuer
       try {
-        const pdfUrl = await generateCertificatePDF(certificate, user)
-        certificate.certificateUrl = pdfUrl
-        await certificate.save()
-      } catch (err) {
-        console.error('Failed to generate certificate PDF:', err)
-      }
+        const { NGO } = await import('../models/index.js')
+        
+        // Try to find a system NGO or use the first NGO
+        let issuerNgoId = null
+        const systemNgo = await NGO.findOne({ isSystem: true })
+        if (systemNgo) {
+          issuerNgoId = systemNgo._id
+        } else {
+          const anyNgo = await NGO.findOne()
+          if (anyNgo) {
+            issuerNgoId = anyNgo._id
+          }
+        }
 
-      result.newCertificate = certificate
+        if (issuerNgoId) {
+          const levelConfig = LEVELS.find(l => l.level === newLevel)
+          const certificate = await Certificate.create({
+            recipient: user._id,
+            issuer: issuerNgoId,
+            type: 'achievement',
+            title: `Level Up: ${levelConfig.name}`,
+            description: `Awarded for reaching Level ${newLevel} by earning ${user.points} points.`,
+            issueDate: new Date(),
+            isVerified: true
+          })
+
+          // Generate PDF and update certificate
+          try {
+            const pdfUrl = await generateCertificatePDF(certificate, user)
+            certificate.certificateUrl = pdfUrl
+            await certificate.save()
+          } catch (err) {
+            console.error('Failed to generate certificate PDF:', err)
+            // Don't fail if PDF generation fails, certificate still exists
+          }
+
+          result.newCertificate = certificate
+        }
+      } catch (err) {
+        console.error('Failed to create certificate:', err)
+        // Non-critical error, don't fail the points addition
+      }
     }
 
     await user.save()
+
+    // Emit Socket.IO event for real-time updates
+    if (io && result.levelUp) {
+      io.to(`user:${userId}`).emit('points:earned', {
+        userId,
+        pointsAdded: points,
+        totalPoints: result.totalPoints,
+        levelUp: true,
+        newLevel: result.newLevel,
+        oldLevel: result.oldLevel,
+        source,
+        newBadges: result.newBadges,
+        newCertificate: result.newCertificate
+      })
+    } else if (io) {
+      // Emit even if no level up so client can update progress
+      io.to(`user:${userId}`).emit('points:earned', {
+        userId,
+        pointsAdded: points,
+        totalPoints: result.totalPoints,
+        levelUp: false,
+        newLevel: result.newLevel,
+        source
+      })
+    }
+
     return result
   } catch (error) {
     console.error('Error adding points:', error)

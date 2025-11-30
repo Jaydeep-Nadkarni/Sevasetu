@@ -67,8 +67,11 @@ export const markAttendance = async (req, res) => {
       // Calculate points
       const points = calculateDonationPoints('event')
       
+      // Get io instance for socket updates
+      const io = req.app.get('io')
+      
       // Add points and handle progression
-      pointsResult = await addPoints(user._id, points, 'event')
+      pointsResult = await addPoints(user._id, points, 'event', io)
       
       // Update volunteer hours
       user.volunteerHours = (user.volunteerHours || 0) + (event.duration || 0)
@@ -121,19 +124,7 @@ export const markAttendance = async (req, res) => {
       }
     }
 
-    // 8. Emit Socket Event
-    const io = req.app.get('io')
-    if (io) {
-      io.to(`event:${eventId}`).emit('attendance:update', {
-        message: `Attendance marked for ${user ? user.name : 'User'}`,
-        participantId: user._id,
-        status: 'checked_in',
-        pointsEarned: pointsResult.pointsAdded,
-        levelUp: pointsResult.levelUp
-      })
-    }
-
-    // Return success
+    // 8. Return success
     res.json({
       message: 'Attendance marked successfully',
       pointsEarned: pointsResult.pointsAdded,

@@ -1,10 +1,10 @@
 import express from 'express'
-import { protect } from '../middleware/auth.js'
+import { authenticate } from '../middleware/auth.js'
 import { getNotifications, markAsRead, markAllAsRead } from '../controllers/notificationController.js'
 
 const router = express.Router()
 
-router.use(protect)
+router.use(authenticate)
 
 router.get('/', getNotifications)
 router.patch('/:id/read', markAsRead)

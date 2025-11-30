@@ -4,8 +4,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Login } from './pages/Auth/Login'
 import { Register } from './pages/Auth/Register'
 import { Unauthorized } from './pages/Auth/Unauthorized'
+import Landing from './pages/Landing'
 import { Dashboard } from './pages/User/Dashboard'
 import { Profile } from './pages/User/Profile'
+import Settings from './pages/Settings'
 import CreateDonation from './pages/User/CreateDonation'
 import DonationHistory from './pages/User/DonationHistory'
 import NGODashboard from './pages/NGO/Dashboard'
@@ -70,25 +72,22 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* Home Route */}
+        {/* Home Route - Landing Page for Unauthenticated Users */}
         <Route
           path="/"
           element={
-            <>
-              <Navbar />
-              <div className="container-custom py-8">
-                <h1 className="text-4xl font-bold text-primary mb-4">Welcome to Sevasetu NGO Platform</h1>
-                <p className="text-gray-600 mb-8">A comprehensive platform connecting donors, volunteers, and NGOs</p>
-                <div className="flex gap-4">
-                  <a href="/login" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark">
-                    Login
-                  </a>
-                  <a href="/register" className="px-6 py-2 bg-secondary text-white rounded-lg hover:bg-secondary-dark">
-                    Register
-                  </a>
-                </div>
-              </div>
-            </>
+            isAuthenticated && user ? (
+              <Navigate 
+                to={
+                  user.role === 'ngo_admin' ? '/ngo/dashboard' 
+                  : user.role === 'admin' ? '/admin/dashboard'
+                  : '/dashboard'
+                }
+                replace
+              />
+            ) : (
+              <Landing />
+            )
           }
         />
 
@@ -105,11 +104,33 @@ function App() {
         />
 
         <Route
+          path="/user/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/profile"
           element={
             <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
               <DashboardLayout>
                 <Profile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
+              <DashboardLayout>
+                <Settings />
               </DashboardLayout>
             </ProtectedRoute>
           }
