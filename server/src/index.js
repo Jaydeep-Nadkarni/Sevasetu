@@ -2,7 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import morgan from 'morgan'
 import config from './config/config.js'
-import connectDB from './config/database.js'
+import connectDB from './config/db.js'
 
 const app = express()
 
@@ -48,8 +48,9 @@ app.use((req, res) => {
 const PORT = config.port
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-  console.log(`Environment: ${config.nodeEnv}`)
+  console.log(`\n🚀 Server running on port ${PORT}`)
+  console.log(`📍 Environment: ${config.nodeEnv}`)
+  console.log(`🌐 CORS Origin: ${config.corsOrigin}\n`)
 })
 
 export default app
