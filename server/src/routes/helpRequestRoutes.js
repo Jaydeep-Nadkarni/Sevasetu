@@ -1,6 +1,6 @@
 import express from 'express'
 import { authenticate, authorize } from '../middleware/auth.js'
-import { upload } from '../middleware/upload.js'
+import { uploadMultiple } from '../middleware/upload.js'
 import {
   createHelpRequest,
   listHelpRequests,
@@ -17,7 +17,7 @@ router.get('/', listHelpRequests) // Public can see public requests, auth users 
 router.get('/:id', authenticate, getHelpRequestById) // Details might be restricted
 
 // Protected routes
-router.post('/', authenticate, upload.array('images', 5), createHelpRequest)
+router.post('/', authenticate, uploadMultiple('images', 5), createHelpRequest)
 router.post('/:id/claim', authenticate, authorize(['ngo_admin']), claimHelpRequest)
 router.post('/:id/comment', authenticate, addComment)
 router.patch('/:id/status', authenticate, updateStatus)

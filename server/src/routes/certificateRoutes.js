@@ -1,5 +1,5 @@
 import express from 'express'
-import { protect } from '../middleware/auth.js'
+import { authenticate } from '../middleware/auth.js'
 import {
   getMyCertificates,
   verifyCertificate,
@@ -12,7 +12,7 @@ const router = express.Router()
 router.get('/verify/:code', verifyCertificate)
 
 // Protected routes
-router.use(protect)
+router.use(authenticate)
 router.get('/my-certificates', getMyCertificates)
 router.get('/:id', getCertificateById)
 
