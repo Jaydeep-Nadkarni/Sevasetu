@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useQuery } from 'react-query'
 import { Filter, Search, MapPin, Calendar, AlertCircle, Users } from 'lucide-react'
+import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'
 
 const HelpRequestList = () => {
-  const [requests, setRequests] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { socket, invalidateQueries } = useSocket()
+  
   const [filters, setFilters] = useState({
     category: 'all',
     status: 'all',
@@ -13,21 +15,19 @@ const HelpRequestList = () => {
     city: '',
     search: ''
   })
+  const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({
     current: 1,
     total: 1,
     count: 0
   })
 
-  useEffect(() => {
-    fetchRequests()
-  }, [filters, pagination.current])
-
-  const fetchRequests = async () => {
-    try {
-      setLoading(true)
+  // Fetch help requests with React Query
+  const { data, isLoading, refetch } = useQuery(
+    ['help-requests', { ...filters, page }],
+    async () => {
       const params = {
-        page: pagination.current,
+        page,
         limit: 9,
         ...filters
       }
@@ -37,19 +37,41 @@ const HelpRequestList = () => {
       })
 
       const { data } = await api.get('/help-requests', { params })
-      setRequests(data.helpRequests)
       setPagination(data.pagination)
-    } catch (error) {
-      console.error('Error fetching requests:', error)
-    } finally {
-      setLoading(false)
+      return data.helpRequests
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     }
-  }
+  )
+
+  const requests = data || []
+
+  // Socket.IO listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleHelpRequestUpdate = () => {
+      invalidateQueries('help-requests')
+      refetch()
+    }
+
+    socket.on('help-request:created', handleHelpRequestUpdate)
+    socket.on('help-request:updated', handleHelpRequestUpdate)
+    socket.on('help-request:deleted', handleHelpRequestUpdate)
+
+    return () => {
+      socket.off('help-request:created', handleHelpRequestUpdate)
+      socket.off('help-request:updated', handleHelpRequestUpdate)
+      socket.off('help-request:deleted', handleHelpRequestUpdate)
+    }
+  }, [socket, invalidateQueries, refetch])
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
     setFilters(prev => ({ ...prev, [name]: value }))
-    setPagination(prev => ({ ...prev, current: 1 })) // Reset to page 1
+    setPage(1) // Reset to page 1
   }
 
   const getUrgencyColor = (urgency) => {
@@ -143,7 +165,7 @@ const HelpRequestList = () => {
       </div>
 
       {/* Grid */}
-      {loading ? (
+      {isLoading ? (
         <div className="text-center py-12">Loading...</div>
       ) : requests.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-xl">
@@ -222,18 +244,18 @@ const HelpRequestList = () => {
       {pagination.total > 1 && (
         <div className="flex justify-center mt-8 gap-2">
           <button
-            onClick={() => setPagination(prev => ({ ...prev, current: Math.max(1, prev.current - 1) }))}
-            disabled={pagination.current === 1}
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
             className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
           >
             Previous
           </button>
           <span className="px-4 py-2 bg-gray-100 rounded-lg">
-            Page {pagination.current} of {pagination.total}
+            Page {page} of {pagination.total}
           </span>
           <button
-            onClick={() => setPagination(prev => ({ ...prev, current: Math.min(pagination.total, prev.current + 1) }))}
-            disabled={pagination.current === pagination.total}
+            onClick={() => setPage(Math.min(pagination.total, page + 1))}
+            disabled={page === pagination.total}
             className="px-4 py-2 border rounded-lg disabled:opacity-50 hover:bg-gray-50"
           >
             Next

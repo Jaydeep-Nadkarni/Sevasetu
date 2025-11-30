@@ -1,27 +1,48 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useQuery } from 'react-query'
 import { Trophy, Medal, Crown } from 'lucide-react'
+import { useSocket } from '../context/SocketContext'
 import api from '../utils/api'
 import { toast } from 'react-hot-toast'
 
 const Leaderboard = () => {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { socket, invalidateQueries } = useSocket()
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        const { data } = await api.get('/users/leaderboard?limit=50')
-        setUsers(data.data)
-      } catch (error) {
+  // Fetch leaderboard with React Query
+  const { data: users = [], isLoading, refetch } = useQuery(
+    ['leaderboard'],
+    async () => {
+      const { data } = await api.get('/users/leaderboard?limit=50')
+      return data.data
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      onError: (error) => {
         console.error('Error fetching leaderboard:', error)
         toast.error('Failed to load leaderboard')
-      } finally {
-        setLoading(false)
       }
     }
-    fetchLeaderboard()
-  }, [])
+  )
+
+  // Socket.IO listeners for real-time leaderboard updates
+  useEffect(() => {
+    if (!socket) return
+
+    const handleLeaderboardUpdate = () => {
+      invalidateQueries('leaderboard')
+      refetch()
+    }
+
+    socket.on('leaderboard:updated', handleLeaderboardUpdate)
+    socket.on('points:earned', handleLeaderboardUpdate)
+
+    return () => {
+      socket.off('leaderboard:updated', handleLeaderboardUpdate)
+      socket.off('points:earned', handleLeaderboardUpdate)
+    }
+  }, [socket, invalidateQueries, refetch])
 
   const getRankIcon = (index) => {
     switch (index) {
@@ -36,7 +57,7 @@ const Leaderboard = () => {
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

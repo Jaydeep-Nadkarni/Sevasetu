@@ -1,65 +1,65 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useQuery } from 'react-query'
 import { Trophy, Star, Award, TrendingUp, Clock, Target } from 'lucide-react'
-import api from '../../utils/api'
 import { useSocket } from '../../context/SocketContext'
+import api from '../../utils/api'
 import { toast } from 'react-hot-toast'
 
 const Progress = () => {
-  const [stats, setStats] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const { socket } = useSocket()
+  const { socket, invalidateQueries } = useSocket()
 
-  const fetchProgress = async () => {
-    try {
+  // Fetch progress with React Query
+  const { data: stats, isLoading, refetch } = useQuery(
+    ['progress'],
+    async () => {
       const { data } = await api.get('/users/progress')
-      setStats(data.data)
-    } catch (error) {
-      console.error('Error fetching progress:', error)
-      toast.error('Failed to load progress')
+      return data.data
+    },
+    {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      onError: (error) => {
+        console.error('Error fetching progress:', error)
+        toast.error('Failed to load progress')
+      }
     }
-  }
+  )
 
-  useEffect(() => {
-    fetchProgress()
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false))
-  }, [])
-
-  // Listen for real-time points updates
+  // Socket.IO listeners for real-time points and badge updates
   useEffect(() => {
     if (!socket) return
 
     const handlePointsEarned = (data) => {
       console.log('Points earned event received:', data)
-      setStats((prev) => {
-        if (!prev) return prev
-        const updated = {
-          ...prev,
-          points: data.totalPoints,
-          progress: prev.progress || 0,
-          pointsToNext: prev.pointsToNext || 0,
-          level: data.newLevel,
-        }
-        
-        if (data.levelUp) {
-          updated.currentLevelName = `Level ${data.newLevel}`
-          // Refresh progress on level up to recalculate
-          fetchProgress()
-        }
-        
-        return updated
-      })
+      // Invalidate progress cache to trigger refetch
+      invalidateQueries('progress')
+      refetch()
+
+      if (data.levelUp) {
+        toast(`Level Up! 🎉 You reached ${data.newLevel}!`, {
+          icon: '⭐',
+          duration: 4000,
+          position: 'top-right'
+        })
+      }
+    }
+
+    const handleBadgeEarned = () => {
+      invalidateQueries('progress')
+      refetch()
     }
 
     socket.on('points:earned', handlePointsEarned)
+    socket.on('badge:earned', handleBadgeEarned)
 
     return () => {
       socket.off('points:earned', handlePointsEarned)
+      socket.off('badge:earned', handleBadgeEarned)
     }
-  }, [socket])
+  }, [socket, invalidateQueries, refetch])
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

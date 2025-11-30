@@ -7,6 +7,26 @@ import NotificationCenter from '../Notifications/NotificationCenter'
 import LevelIndicator from '../LevelIndicator'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const HamburgerIcon = ({ isOpen }) => (
+  <div className="flex flex-col justify-center items-center w-6 h-6 relative">
+    <motion.div
+      className="w-6 h-0.5 bg-current rounded-full"
+      animate={isOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
+      transition={{ duration: 0.3 }}
+    />
+    <motion.div
+      className="w-6 h-0.5 bg-current rounded-full mt-1.5"
+      animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    />
+    <motion.div
+      className="w-6 h-0.5 bg-current rounded-full mt-1.5"
+      animate={isOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
+      transition={{ duration: 0.3 }}
+    />
+  </div>
+)
+
 export const Navbar = ({ onMenuClick }) => {
   const { isDark, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
@@ -40,46 +60,64 @@ export const Navbar = ({ onMenuClick }) => {
   }
 
   return (
-    <nav className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-200">
+    <nav className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/50 dark:border-gray-800/50 shadow-sm transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center gap-3">
+          <motion.div 
+            className="flex-shrink-0 flex items-center gap-3"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             {onMenuClick && (
-              <button
+              <motion.button
                 onClick={onMenuClick}
-                className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="md:hidden p-2 rounded-xl text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
-              </button>
+              </motion.button>
             )}
-            <button
+            <motion.button
               onClick={() => navigate('/')}
-              className="text-2xl font-bold text-primary dark:text-primary-light"
+              className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               Sevasetu
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-4">
-            <button
+          <motion.div 
+            className="hidden md:flex items-center gap-6"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <motion.button
               onClick={() => navigate('/map')}
-              className="px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+              className="px-4 py-2 rounded-xl font-medium transition-all text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               Map
-            </button>
+            </motion.button>
 
             {user && (
               <>
-                <button
+                <motion.button
                   onClick={() => navigate(getDashboardLink())}
-                  className="px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                  className="px-4 py-2 rounded-xl font-medium transition-all text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800/80"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Dashboard
-                </button>
+                </motion.button>
                 
                 <NotificationCenter />
                 
@@ -92,9 +130,11 @@ export const Navbar = ({ onMenuClick }) => {
             )}
 
             {/* Theme Toggle */}
-            <button
+            <motion.button
               onClick={toggleTheme}
-              className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="p-2.5 rounded-xl transition-all bg-gray-100/80 text-gray-700 dark:bg-gray-800/80 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+              whileHover={{ scale: 1.1, rotate: 20 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Toggle theme"
             >
               {isDark ? (
@@ -106,57 +146,83 @@ export const Navbar = ({ onMenuClick }) => {
                   <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                 </svg>
               )}
-            </button>
+            </motion.button>
 
             {/* User Menu */}
             {user && (
-              <div className="relative">
-                <button
+              <div className="relative ml-2">
+                <motion.button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-200"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                  <motion.div 
+                    className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                    whileHover={{ scale: 1.1 }}
+                  >
                     {user.firstName?.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium">{user.firstName}</span>
-                </button>
+                  </motion.div>
+                  <span className="text-sm font-semibold hidden sm:inline">{user.firstName}</span>
+                  <motion.svg
+                    className="w-4 h-4"
+                    animate={{ rotate: isUserMenuOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                  </motion.svg>
+                </motion.button>
 
                 <AnimatePresence>
                   {isUserMenuOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 rounded-xl shadow-xl bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden backdrop-blur-sm"
                     >
-                      {[
-                        { label: 'Profile', path: '/profile' },
-                        { label: 'My Progress', path: '/progress' },
-                        { label: 'My Certificates', path: '/certificates' },
-                        { label: 'Leaderboard', path: '/leaderboard' },
-                        { label: 'Donate Money', path: '/donate-money' },
-                        { label: 'Transaction History', path: '/transactions' },
-                        { label: 'Settings', path: '/settings' },
-                      ].map((item) => (
-                        <button
-                          key={item.path}
-                          onClick={() => {
-                            navigate(item.path)
-                            setIsUserMenuOpen(false)
-                          }}
-                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
+                      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700/50">
+                        <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{user.firstName} {user.lastName}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                      </div>
+                      <div className="py-2">
+                        {[
+                          { label: 'Profile', path: '/profile', icon: '👤' },
+                          { label: 'My Progress', path: '/progress', icon: '📊' },
+                          { label: 'My Certificates', path: '/certificates', icon: '🎓' },
+                          { label: 'Leaderboard', path: '/leaderboard', icon: '🏆' },
+                          { label: 'Donate Money', path: '/donate-money', icon: '💰' },
+                          { label: 'Transaction History', path: '/transactions', icon: '💳' },
+                          { label: 'Settings', path: '/settings', icon: '⚙️' },
+                        ].map((item) => (
+                          <motion.button
+                            key={item.path}
+                            onClick={() => {
+                              navigate(item.path)
+                              setIsUserMenuOpen(false)
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-200 transition-colors flex items-center gap-2"
+                            whileHover={{ x: 4 }}
+                          >
+                            <span>{item.icon}</span>
+                            {item.label}
+                          </motion.button>
+                        ))}
+                      </div>
+                      <div className="border-t border-gray-200 dark:border-gray-700/50 py-2">
+                        <motion.button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                          whileHover={{ x: 4 }}
                         >
-                          {item.label}
-                        </button>
-                      ))}
-                      <hr className="border-gray-200 dark:border-gray-700" />
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        Logout
-                      </button>
+                          <span>🚪</span>
+                          Logout
+                        </motion.button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -164,97 +230,121 @@ export const Navbar = ({ onMenuClick }) => {
             )}
 
             {!user && (
-              <div className="flex gap-2">
+              <motion.div 
+                className="flex gap-3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
                 <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
                   Login
                 </Button>
                 <Button size="sm" onClick={() => navigate('/register')}>
                   Register
                 </Button>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
-            <button
+          <motion.div 
+            className="md:hidden flex items-center gap-3"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <motion.button
               onClick={toggleTheme}
-              className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-yellow-400"
+              className="p-2.5 rounded-xl transition-all bg-gray-100/80 text-gray-700 dark:bg-gray-800/80 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+              whileHover={{ scale: 1.1, rotate: 20 }}
+              whileTap={{ scale: 0.95 }}
             >
               {isDark ? '☀️' : '🌙'}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+              className="p-2.5 rounded-xl transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+              <HamburgerIcon isOpen={isMobileMenuOpen} />
+            </motion.button>
+          </motion.div>
         </div>
 
         {/* Mobile Menu */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isMobileMenuOpen && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden"
+              transition={{ duration: 0.3 }}
+              className="md:hidden overflow-hidden border-t border-gray-200/50 dark:border-gray-700/50"
             >
-              <div className="pb-4 space-y-2 border-t border-gray-200 dark:border-gray-800 pt-2">
-                <button
+              <motion.div 
+                className="py-4 px-4 sm:px-6 space-y-2"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.2 }}
+              >
+                <motion.button
                   onClick={() => {
                     navigate('/map')
                     setIsMobileMenuOpen(false)
                   }}
-                  className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                  className="w-full text-left px-4 py-3 rounded-xl font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-200"
+                  whileHover={{ x: 4 }}
                 >
-                  Map
-                </button>
+                  🗺️ Map
+                </motion.button>
 
                 {user && (
                   <>
-                    <button
+                    <motion.button
                       onClick={() => {
                         navigate(getDashboardLink())
                         setIsMobileMenuOpen(false)
                       }}
-                      className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      className="w-full text-left px-4 py-3 rounded-xl font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-200"
+                      whileHover={{ x: 4 }}
                     >
-                      Dashboard
-                    </button>
+                      📊 Dashboard
+                    </motion.button>
                     {[
-                      { label: 'My Progress', path: '/progress' },
-                      { label: 'My Certificates', path: '/certificates' },
-                      { label: 'Leaderboard', path: '/leaderboard' },
-                      { label: 'Donate Money', path: '/donate-money' },
-                      { label: 'Transaction History', path: '/transactions' },
-                      { label: 'Profile', path: '/profile' },
-                      { label: 'Settings', path: '/settings' },
+                      { label: 'My Progress', path: '/progress', icon: '📈' },
+                      { label: 'My Certificates', path: '/certificates', icon: '🎓' },
+                      { label: 'Leaderboard', path: '/leaderboard', icon: '🏆' },
+                      { label: 'Donate Money', path: '/donate-money', icon: '💰' },
+                      { label: 'Transaction History', path: '/transactions', icon: '💳' },
+                      { label: 'Profile', path: '/profile', icon: '👤' },
+                      { label: 'Settings', path: '/settings', icon: '⚙️' },
                     ].map((item) => (
-                      <button
+                      <motion.button
                         key={item.path}
                         onClick={() => {
                           navigate(item.path)
                           setIsMobileMenuOpen(false)
                         }}
-                        className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                        className="w-full text-left px-4 py-3 rounded-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-800/80 text-gray-700 dark:text-gray-200 flex items-center gap-2"
+                        whileHover={{ x: 4 }}
                       >
+                        <span>{item.icon}</span>
                         {item.label}
-                      </button>
+                      </motion.button>
                     ))}
-                    <button
+                    <motion.button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-red-500 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                      className="w-full text-left px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex items-center gap-2"
+                      whileHover={{ x: 4 }}
                     >
+                      <span>🚪</span>
                       Logout
-                    </button>
+                    </motion.button>
                   </>
                 )}
                 {!user && (
-                  <div className="flex gap-2 px-4">
+                  <div className="flex gap-2 pt-2">
                     <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="w-full">
                       Login
                     </Button>
@@ -263,7 +353,7 @@ export const Navbar = ({ onMenuClick }) => {
                     </Button>
                   </div>
                 )}
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
