@@ -8,7 +8,13 @@ import { Dashboard } from './pages/User/Dashboard'
 import { Profile } from './pages/User/Profile'
 import CreateDonation from './pages/User/CreateDonation'
 import DonationHistory from './pages/User/DonationHistory'
-import DonationManagement from './pages/NGO/DonationManagement'
+import NGODashboard from './pages/NGO/Dashboard'
+import NGOProfile from './pages/NGO/Profile'
+import NGOAnalytics from './pages/NGO/Analytics'
+import NGODonations from './pages/NGO/Donations'
+import NGOEvents from './pages/NGO/Events'
+import NGOHelpRequests from './pages/NGO/HelpRequests'
+import NGOSettings from './pages/NGO/Settings'
 import CreateEventNGO from './pages/NGO/CreateEvent'
 import CreateEventUser from './pages/User/CreateEvent'
 import EventList from './pages/Events/EventList'
@@ -17,7 +23,6 @@ import QRScanner from './pages/NGO/QRScanner'
 import CreateHelpRequest from './pages/User/CreateHelpRequest'
 import HelpRequestList from './pages/HelpRequests/HelpRequestList'
 import HelpRequestDetail from './pages/HelpRequests/HelpRequestDetail'
-import HelpRequestManagement from './pages/NGO/HelpRequestManagement'
 import NearbyMap from './pages/Map/NearbyMap'
 import Progress from './pages/User/Progress'
 import Leaderboard from './pages/Leaderboard'
@@ -25,11 +30,17 @@ import Certificates from './pages/User/Certificates'
 import CertificateVerify from './pages/CertificateVerify'
 import DonateMoney from './pages/User/DonateMoney'
 import TransactionHistory from './pages/User/TransactionHistory'
+import ChatWidget from './components/Chatbot/ChatWidget'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
 import { getCurrentUser } from './store/slices/authSlice'
 import { Navbar } from './components/UI/Navbar'
+
+import AdminDashboard from './pages/Admin/Dashboard'
+import NGOVerification from './pages/Admin/NGOVerification'
+import UserManagement from './pages/Admin/UserManagement'
+import PlatformAnalytics from './pages/Admin/Analytics'
 
 function App() {
   const dispatch = useDispatch()
@@ -45,10 +56,13 @@ function App() {
     <Router>
       {/* Notifications Component */}
       {isAuthenticated && user && (
-        <Notifications 
-          userId={user._id} 
-          userType={user.role === 'ngo_admin' ? 'ngo' : 'donor'} 
-        />
+        <>
+          <Notifications 
+            userId={user._id} 
+            userType={user.role === 'ngo_admin' ? 'ngo' : 'donor'} 
+          />
+          <ChatWidget />
+        </>
       )}
       <Routes>
         {/* Public Routes */}
@@ -189,14 +203,29 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ngo_admin']}>
               <DashboardLayout>
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <main className="flex-1 overflow-y-auto">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                      <h1 className="text-3xl font-bold text-primary mb-4">NGO Dashboard</h1>
-                      <p className="text-gray-600">Welcome to your NGO management dashboard!</p>
-                    </div>
-                  </main>
-                </div>
+                <NGODashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ngo/profile"
+          element={
+            <ProtectedRoute allowedRoles={['ngo_admin']}>
+              <DashboardLayout>
+                <NGOProfile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ngo/analytics"
+          element={
+            <ProtectedRoute allowedRoles={['ngo_admin']}>
+              <DashboardLayout>
+                <NGOAnalytics />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -208,7 +237,40 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['ngo_admin']}>
               <DashboardLayout>
-                <DonationManagement />
+                <NGODonations />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ngo/events"
+          element={
+            <ProtectedRoute allowedRoles={['ngo_admin']}>
+              <DashboardLayout>
+                <NGOEvents />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ngo/help-requests"
+          element={
+            <ProtectedRoute allowedRoles={['ngo_admin']}>
+              <DashboardLayout>
+                <NGOHelpRequests />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ngo/settings"
+          element={
+            <ProtectedRoute allowedRoles={['ngo_admin']}>
+              <DashboardLayout>
+                <NGOSettings />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -299,30 +361,47 @@ function App() {
           }
         />
 
-        <Route
-          path="/ngo/help-requests"
-          element={
-            <ProtectedRoute allowedRoles={['ngo_admin']}>
-              <DashboardLayout>
-                <HelpRequestManagement />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
+
 
         <Route
           path="/admin/dashboard"
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <DashboardLayout>
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <main className="flex-1 overflow-y-auto">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                      <h1 className="text-3xl font-bold text-primary mb-4">Admin Dashboard</h1>
-                      <p className="text-gray-600">Welcome to the admin panel!</p>
-                    </div>
-                  </main>
-                </div>
+                <AdminDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/ngo-verification"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DashboardLayout>
+                <NGOVerification />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DashboardLayout>
+                <UserManagement />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DashboardLayout>
+                <PlatformAnalytics />
               </DashboardLayout>
             </ProtectedRoute>
           }

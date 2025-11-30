@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .container {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #4F46E5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .approved {
+            background-color: #DEF7EC;
+            color: #03543F;
+        }
+        .rejected {
+            background-color: #FDE8E8;
+            color: #9B1C1C;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NGO Application Update</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {{adminName}},</h2>
+            
+            <p>Your application for registering <strong>{{ngoName}}</strong> on SevaSetu has been processed.</p>
+            
+            <div style="text-align: center;">
+                <span class="status-badge {{statusClass}}">
+                    Status: {{status}}
+                </span>
+            </div>
+
+            {{#if isApproved}}
+            <p>Congratulations! Your NGO has been approved and is now live on our platform.</p>
+            <p>You can now:</p>
+            <ul>
+                <li>Accept donations</li>
+                <li>Create events</li>
+                <li>Manage volunteers</li>
+            </ul>
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="button">Go to Dashboard</a>
+            </div>
+            {{else}}
+            <p>We regret to inform you that your application has been rejected.</p>
+            <p><strong>Reason:</strong> {{reason}}</p>
+            <p>If you believe this is a mistake or if you have rectified the issues, please contact our support team.</p>
+            {{/if}}
+            
+            <p>Best regards,<br>The SevaSetu Team</p>
+        </div>
+    </div>
+</body>
+</html>

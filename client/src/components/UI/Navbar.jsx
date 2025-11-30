@@ -3,8 +3,10 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './Button'
+import NotificationCenter from '../Notifications/NotificationCenter'
+import { motion, AnimatePresence } from 'framer-motion'
 
-export const Navbar = () => {
+export const Navbar = ({ onMenuClick }) => {
   const { isDark, toggleTheme } = useTheme()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -28,15 +30,33 @@ export const Navbar = () => {
     }
   }
 
+  const handleMobileMenuClick = () => {
+    if (onMenuClick) {
+      onMenuClick()
+    } else {
+      setIsMobileMenuOpen(!isMobileMenuOpen)
+    }
+  }
+
   return (
-    <nav className={`sticky top-0 z-40 ${isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'} border-b shadow-sm`}>
+    <nav className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center gap-3">
+            {onMenuClick && (
+              <button
+                onClick={onMenuClick}
+                className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            )}
             <button
               onClick={() => navigate('/')}
-              className={`text-2xl font-bold ${isDark ? 'text-primary' : 'text-primary'}`}
+              className="text-2xl font-bold text-primary dark:text-primary-light"
             >
               Sevasetu
             </button>
@@ -46,7 +66,7 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center gap-4">
             <button
               onClick={() => navigate('/map')}
-              className={`px-3 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+              className="px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
             >
               Map
             </button>
@@ -55,18 +75,20 @@ export const Navbar = () => {
               <>
                 <button
                   onClick={() => navigate(getDashboardLink())}
-                  className={`px-3 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                  className="px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
                 >
                   Dashboard
                 </button>
                 
+                <NotificationCenter />
+                
                 {/* Points Display */}
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-indigo-50 border-indigo-100'}`}>
+                <div className="flex items-center gap-2 px-3 py-1 rounded-full border bg-indigo-50 border-indigo-100 dark:bg-gray-800 dark:border-gray-700 transition-colors">
                   <span className="text-yellow-500">★</span>
-                  <span className={`text-sm font-bold ${isDark ? 'text-gray-200' : 'text-indigo-900'}`}>
+                  <span className="text-sm font-bold text-indigo-900 dark:text-gray-200">
                     {user.points || 0}
                   </span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-white text-indigo-600'}`}>
+                  <span className="text-xs px-1.5 py-0.5 rounded-full bg-white text-indigo-600 dark:bg-gray-700 dark:text-gray-300">
                     Lvl {user.level || 1}
                   </span>
                 </div>
@@ -76,7 +98,7 @@ export const Navbar = () => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-lg transition ${isDark ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-700'}`}
+              className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               aria-label="Toggle theme"
             >
               {isDark ? (
@@ -95,7 +117,7 @@ export const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
                 >
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-semibold">
                     {user.firstName?.charAt(0).toUpperCase()}
@@ -103,80 +125,45 @@ export const Navbar = () => {
                   <span className="text-sm font-medium">{user.firstName}</span>
                 </button>
 
-                {isUserMenuOpen && (
-                  <div className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg ${isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-                    <button
-                      onClick={() => {
-                        navigate('/profile')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden"
                     >
-                      Profile
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/progress')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      My Progress
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/certificates')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      My Certificates
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/leaderboard')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      Leaderboard
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/donate-money')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      Donate Money
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/transactions')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      Transaction History
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate('/settings')
-                        setIsUserMenuOpen(false)
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      Settings
-                    </button>
-                    <hr className={isDark ? 'border-gray-700' : 'border-gray-200'} />
-                    <button
-                      onClick={handleLogout}
-                      className={`block w-full text-left px-4 py-2 text-sm text-red-500 ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                      {[
+                        { label: 'Profile', path: '/profile' },
+                        { label: 'My Progress', path: '/progress' },
+                        { label: 'My Certificates', path: '/certificates' },
+                        { label: 'Leaderboard', path: '/leaderboard' },
+                        { label: 'Donate Money', path: '/donate-money' },
+                        { label: 'Transaction History', path: '/transactions' },
+                        { label: 'Settings', path: '/settings' },
+                      ].map((item) => (
+                        <button
+                          key={item.path}
+                          onClick={() => {
+                            navigate(item.path)
+                            setIsUserMenuOpen(false)
+                          }}
+                          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 transition-colors"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                      <hr className="border-gray-200 dark:border-gray-700" />
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             )}
 
@@ -196,13 +183,13 @@ export const Navbar = () => {
           <div className="md:hidden flex items-center gap-2">
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-lg transition ${isDark ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-700'}`}
+              className="p-2 rounded-lg transition-colors bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-yellow-400"
             >
               {isDark ? '☀️' : '🌙'}
             </button>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`p-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+              className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -212,103 +199,77 @@ export const Navbar = () => {
         </div>
 
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className={`md:hidden pb-4 space-y-2 ${isDark ? 'border-t border-gray-800' : 'border-t border-gray-200'}`}>
-            <button
-              onClick={() => {
-                navigate('/map')
-                setIsMobileMenuOpen(false)
-              }}
-              className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="md:hidden overflow-hidden"
             >
-              Map
-            </button>
+              <div className="pb-4 space-y-2 border-t border-gray-200 dark:border-gray-800 pt-2">
+                <button
+                  onClick={() => {
+                    navigate('/map')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                >
+                  Map
+                </button>
 
-            {user && (
-              <>
-                <button
-                  onClick={() => {
-                    navigate(getDashboardLink())
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/progress')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  My Progress
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/certificates')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  My Certificates
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/leaderboard')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Leaderboard
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/donate-money')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Donate Money
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/transactions')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Transaction History
-                </button>
-                <button
-                  onClick={() => {
-                    navigate('/profile')
-                    setIsMobileMenuOpen(false)
-                  }}
-                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className={`block w-full text-left px-4 py-2 text-red-500 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
-                >
-                  Logout
-                </button>
-              </>
-            )}
-            {!user && (
-              <div className="flex gap-2 px-4">
-                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="w-full">
-                  Login
-                </Button>
-                <Button size="sm" onClick={() => navigate('/register')} className="w-full">
-                  Register
-                </Button>
+                {user && (
+                  <>
+                    <button
+                      onClick={() => {
+                        navigate(getDashboardLink())
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                    >
+                      Dashboard
+                    </button>
+                    {[
+                      { label: 'My Progress', path: '/progress' },
+                      { label: 'My Certificates', path: '/certificates' },
+                      { label: 'Leaderboard', path: '/leaderboard' },
+                      { label: 'Donate Money', path: '/donate-money' },
+                      { label: 'Transaction History', path: '/transactions' },
+                      { label: 'Profile', path: '/profile' },
+                    ].map((item) => (
+                      <button
+                        key={item.path}
+                        onClick={() => {
+                          navigate(item.path)
+                          setIsMobileMenuOpen(false)
+                        }}
+                        className="block w-full text-left px-4 py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                    <button
+                      onClick={handleLogout}
+                      className="block w-full text-left px-4 py-2 text-red-500 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
+                      Logout
+                    </button>
+                  </>
+                )}
+                {!user && (
+                  <div className="flex gap-2 px-4">
+                    <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="w-full">
+                      Login
+                    </Button>
+                    <Button size="sm" onClick={() => navigate('/register')} className="w-full">
+                      Register
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   )

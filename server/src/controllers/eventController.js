@@ -3,6 +3,8 @@ import QRAttendance from '../models/QRAttendance.js'
 import NGO from '../models/NGO.js'
 import cloudinary from '../config/cloudinary.js'
 import QRCode from 'qrcode'
+import { sendNotification } from '../services/notificationService.js'
+import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
 
 // === CREATE EVENT ===
 export const createEvent = async (req, res) => {
@@ -421,6 +423,7 @@ export const joinEvent = async (req, res) => {
     // Emit Socket.IO notification
     const io = req.app.get('io')
     if (io) {
+      // Real-time update to event room (for live counters etc)
       io.to(`event:${id}`).emit('event:user_joined', {
         message: `A new user has registered for "${event.title}"`,
         userId,
@@ -428,11 +431,33 @@ export const joinEvent = async (req, res) => {
         attendeeCount: event.registeredCount,
       })
 
-      // Notify event creator
-      io.to(`user:${event.createdBy}`).emit('event:new_registration', {
+      // Persistent notification to event creator
+      await sendNotification(io, {
+        recipientId: event.createdBy,
+        type: 'event_registration',
+        title: 'New Event Registration',
         message: `New registration for your event "${event.title}"`,
-        eventId: id,
-        attendeeCount: event.registeredCount,
+        data: {
+          eventId: id,
+          attendeeCount: event.registeredCount
+        }
+      })
+
+      // Send confirmation email to attendee
+      await sendNotification(io, {
+        recipientId: userId,
+        type: 'event_registration',
+        title: 'Event Registration Confirmed',
+        message: `You have successfully registered for ${event.title}`,
+        data: { eventId: id },
+        emailTemplate: 'event_registration',
+        emailData: {
+          eventTitle: event.title,
+          eventDate: new Date(event.eventDate).toLocaleDateString(),
+          eventTime: event.eventTime,
+          location: event.location,
+          qrCodeUrl: qrCode
+        }
       })
     }
 
@@ -578,6 +603,10 @@ export const scanQRCode = async (req, res) => {
     }
     await event.save()
 
+    // Award Points
+    const points = calculateDonationPoints('event')
+    const pointsResult = await addPoints(qrRecord.participant, points, 'event')
+
     // Populate and return
     await qrRecord.populate('participant', 'name email profilePicture')
 
@@ -587,12 +616,56 @@ export const scanQRCode = async (req, res) => {
       io.to(`event:${id}`).emit('event:attendance_scanned', {
         message: `Attendance marked for ${qrRecord.participant?.name || 'user'}`,
         qrRecord,
+        pointsEarned: points,
+        levelUp: pointsResult.levelUp
       })
+
+      // Send email to participant
+      await sendNotification(io, {
+        recipientId: qrRecord.participant._id,
+        type: 'attendance_verified',
+        title: 'Attendance Verified',
+        message: `Your attendance for ${event.title} has been verified. You earned ${points} points.`,
+        data: { 
+            eventId: id,
+            pointsEarned: points,
+            levelUp: pointsResult.levelUp
+        },
+        emailTemplate: 'attendance_confirmation',
+        emailData: {
+          eventTitle: event.title,
+          pointsEarned: points,
+          totalPoints: pointsResult.totalPoints
+        }
+      })
+
+      // Send Certificate Email if earned
+      if (pointsResult.newCertificate) {
+        await sendNotification(io, {
+            recipientId: qrRecord.participant._id,
+            type: 'certificate_earned',
+            title: 'New Certificate Earned!',
+            message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+            data: {
+                certificateId: pointsResult.newCertificate._id,
+                certificateUrl: pointsResult.newCertificate.certificateUrl
+            },
+            emailTemplate: 'certificate_issued',
+            emailData: {
+                recipientName: qrRecord.participant.name || 'Volunteer',
+                certificateTitle: pointsResult.newCertificate.title,
+                issueDate: new Date().toLocaleDateString(),
+                certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+            }
+        })
+      }
     }
 
     res.json({
       message: 'Attendance marked successfully',
       qrRecord,
+      pointsEarned: points,
+      levelUp: pointsResult.levelUp
     })
   } catch (error) {
     console.error('Error scanning QR code:', error)
@@ -632,15 +705,21 @@ export const approveEvent = async (req, res) => {
 
     await event.save()
 
-    // Emit Socket.IO notification to event creator
+    // Send notification to event creator
     const io = req.app.get('io')
     if (io) {
-      io.to(`user:${event.createdBy}`).emit('event:approval_status', {
+      await sendNotification(io, {
+        recipientId: event.createdBy,
+        type: 'admin_approval',
+        title: isApproved ? 'Event Approved' : 'Event Rejected',
         message: isApproved
           ? `Your event "${event.title}" has been approved!`
           : `Your event "${event.title}" has been rejected. Reason: ${rejectionReason}`,
-        event,
-        status: event.status,
+        data: {
+          eventId: event._id,
+          status: event.status,
+          rejectionReason
+        }
       })
     }
 

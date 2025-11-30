@@ -1,10 +1,21 @@
 import express from 'express'
-import cors from 'cors'
 import morgan from 'morgan'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
+import compression from 'compression'
 import config from './config/config.js'
 import connectDB from './config/db.js'
+import logger from './utils/logger.js'
+import AppError from './utils/AppError.js'
+import { errorHandler } from './middleware/errorMiddleware.js'
+import {
+  limiter,
+  securityHeaders,
+  mongoSanitization,
+  xssSanitization,
+  corsConfig,
+} from './middleware/security.js'
+
 import authRoutes from './routes/authRoutes.js'
 import uploadRoutes from './routes/uploadRoutes.js'
 import donationRoutes from './routes/donationRoutes.js'
@@ -14,6 +25,9 @@ import helpRequestRoutes from './routes/helpRequestRoutes.js'
 import ngoRoutes from './routes/ngoRoutes.js'
 import certificateRoutes from './routes/certificateRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js'
+import chatRoutes from './routes/chatRoutes.js'
+import recommendationRoutes from './routes/recommendationRoutes.js'
+import notificationRoutes from './routes/notificationRoutes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -28,99 +42,98 @@ const io = new Server(httpServer, {
 app.set('io', io)
 
 // Socket.IO connection handling
-io.on('connection', socket => {
-  console.log(`📱 New client connected: ${socket.id}`)
+io.on('connection', (socket) => {
+  logger.info(`📱 New client connected: ${socket.id}`)
 
   // User joins their own room for personal notifications
-  socket.on('user:join', userId => {
+  socket.on('user:join', (userId) => {
     socket.join(`user:${userId}`)
-    console.log(`✅ User ${userId} joined their notification room`)
+    logger.info(`✅ User ${userId} joined their notification room`)
   })
 
   // NGO joins their room
-  socket.on('ngo:join', ngoId => {
+  socket.on('ngo:join', (ngoId) => {
     socket.join(`ngo:${ngoId}`)
-    console.log(`✅ NGO ${ngoId} joined their notification room`)
+    logger.info(`✅ NGO ${ngoId} joined their notification room`)
   })
 
   socket.on('disconnect', () => {
-    console.log(`❌ Client disconnected: ${socket.id}`)
+    logger.info(`❌ Client disconnected: ${socket.id}`)
   })
 })
 
-// Middleware
-app.use(morgan('dev'))
+// Global Middleware
+app.use(securityHeaders) // Helmet
+app.use(corsConfig) // CORS
+app.use(express.json({ limit: '10kb' })) // Body parser, reading data from body into req.body
+app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(mongoSanitization) // Data sanitization against NoSQL query injection
+app.use(xssSanitization) // Data sanitization against XSS
+app.use(compression()) // Compress all responses
+
+// Logging
+const morganFormat = ':method :url :status :response-time ms'
 app.use(
-  cors({
-    origin: config.corsOrigin,
-    credentials: true,
-  })
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => {
+        const logObject = {
+          method: message.split(' ')[0],
+          url: message.split(' ')[1],
+          status: message.split(' ')[2],
+          responseTime: message.split(' ')[3],
+        }
+        logger.http(JSON.stringify(logObject))
+      },
+    },
+  }),
 )
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+
+// Rate limiting for API routes
+app.use('/api', limiter)
 
 // Connect to MongoDB
 connectDB()
 
 // Routes
 app.get('/api/health', (req, res) => {
-  res.json({
+  res.status(200).json({
+    status: 'success',
     message: 'Server is running',
     timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
   })
 })
 
-// Auth routes
+// API Routes
 app.use('/api/auth', authRoutes)
-
-// Upload routes
 app.use('/api/upload', uploadRoutes)
-
-// Donation routes
 app.use('/api/donations', donationRoutes)
-
-// Event routes
 app.use('/api/events', eventRoutes)
-
-// Attendance routes
 app.use('/api/attendance', attendanceRoutes)
-
-// Help Request routes
 app.use('/api/help-requests', helpRequestRoutes)
-
-// NGO routes
 app.use('/api/ngos', ngoRoutes)
-
-// Certificate routes
 app.use('/api/certificates', certificateRoutes)
-
-// Payment routes
 app.use('/api/payment', paymentRoutes)
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    status: err.status || 500,
-  })
-})
+app.use('/api/chat', chatRoutes)
+app.use('/api/recommendations', recommendationRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    message: 'Route not found',
-    status: 404,
-  })
+app.all('*', (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))
 })
+
+// Global Error Handling Middleware
+app.use(errorHandler)
 
 const PORT = config.port
 
 httpServer.listen(PORT, () => {
-  console.log(`\n🚀 Server running on port ${PORT}`)
-  console.log(`📍 Environment: ${config.nodeEnv}`)
-  console.log(`🌐 CORS Origin: ${config.corsOrigin}`)
-  console.log(`🔌 WebSocket enabled for real-time notifications\n`)
+  logger.info(`\n🚀 Server running on port ${PORT}`)
+  logger.info(`📍 Environment: ${config.nodeEnv}`)
+  logger.info(`🌐 CORS Origin: ${config.corsOrigin}`)
+  logger.info(`🔌 WebSocket enabled for real-time notifications\n`)
 })
 
 export default app

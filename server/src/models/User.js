@@ -94,6 +94,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    verificationToken: String,
+    verificationTokenExpire: Date,
     isActive: {
       type: Boolean,
       default: true,
@@ -101,8 +103,15 @@ const userSchema = new mongoose.Schema(
     },
     preferences: {
       emailNotifications: { type: Boolean, default: true },
+      emailTypes: {
+        marketing: { type: Boolean, default: true },
+        updates: { type: Boolean, default: true },
+        events: { type: Boolean, default: true },
+      },
       pushNotifications: { type: Boolean, default: true },
       newsletter: { type: Boolean, default: true },
+      interests: [{ type: String }], // e.g., 'Education', 'Environment'
+      maxDistance: { type: Number, default: 50 }, // in km
     },
     blockedNGOs: [
       {

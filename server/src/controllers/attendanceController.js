@@ -1,8 +1,8 @@
 import QRAttendance from '../models/QRAttendance.js'
 import Event from '../models/Event.js'
 import User from '../models/User.js'
-import { sendAttendanceConfirmation, sendLevelUpNotification } from '../utils/email.js'
 import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
+import { sendNotification } from '../services/notificationService.js'
 
 // === MARK ATTENDANCE ===
 export const markAttendance = async (req, res) => {
@@ -77,9 +77,47 @@ export const markAttendance = async (req, res) => {
 
     // 7. Send Notifications (Async)
     if (user) {
-      sendAttendanceConfirmation(user, event, pointsResult.pointsAdded).catch(console.error)
-      if (pointsResult.levelUp) {
-        sendLevelUpNotification(user, pointsResult.newLevel).catch(console.error)
+      const io = req.app.get('io')
+      
+      // Send Attendance Confirmation
+      await sendNotification(io, {
+        recipientId: user._id,
+        type: 'event_update',
+        title: 'Attendance Confirmed',
+        message: `Thanks for attending ${event.title}! You earned ${pointsResult.pointsAdded} points.`,
+        data: {
+          eventId: event._id,
+          pointsEarned: pointsResult.pointsAdded,
+          levelUp: pointsResult.levelUp
+        },
+        emailTemplate: 'attendance_confirmation',
+        emailData: {
+          eventName: event.title,
+          eventDate: new Date(event.eventDate).toLocaleDateString(),
+          pointsEarned: pointsResult.pointsAdded,
+          totalPoints: pointsResult.totalPoints
+        }
+      })
+
+      // Send Certificate Email if earned
+      if (pointsResult.newCertificate) {
+        await sendNotification(io, {
+          recipientId: user._id,
+          type: 'certificate_earned',
+          title: 'New Certificate Earned!',
+          message: `Congratulations! You've earned a new certificate: ${pointsResult.newCertificate.title}`,
+          data: {
+            certificateId: pointsResult.newCertificate._id,
+            certificateUrl: pointsResult.newCertificate.certificateUrl
+          },
+          emailTemplate: 'certificate_issued',
+          emailData: {
+            recipientName: user.firstName,
+            certificateTitle: pointsResult.newCertificate.title,
+            issueDate: new Date().toLocaleDateString(),
+            certificateUrl: pointsResult.newCertificate.certificateUrl || '#'
+          }
+        })
       }
     }
 

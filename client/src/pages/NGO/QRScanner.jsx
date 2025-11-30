@@ -108,31 +108,31 @@ const QRScanner = () => {
   }
 
   const previewStyle = {
-    height: 300,
+    height: '100%',
     width: '100%',
     objectFit: 'cover',
     borderRadius: '0.5rem',
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden min-h-[600px]">
+    <div className="max-w-4xl mx-auto p-2 md:p-4 h-[calc(100vh-64px)] flex flex-col">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-full">
         {/* Header */}
-        <div className="bg-indigo-600 p-6 text-white">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <QrCode className="w-8 h-8" />
+        <div className="bg-indigo-600 p-4 md:p-6 text-white shrink-0">
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <QrCode className="w-6 h-6 md:w-8 md:h-8" />
             Event Attendance Scanner
           </h1>
-          <p className="text-indigo-100 mt-2">
+          <p className="text-indigo-100 mt-1 text-sm md:text-base">
             Scan attendee QR codes to mark attendance and award points.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b shrink-0">
           <button
             onClick={() => setActiveTab('scan')}
-            className={`flex-1 py-4 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 md:py-4 text-center font-medium transition-colors text-sm md:text-base ${
               activeTab === 'scan'
                 ? 'text-indigo-600 border-b-2 border-indigo-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -142,7 +142,7 @@ const QRScanner = () => {
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex-1 py-4 text-center font-medium transition-colors ${
+            className={`flex-1 py-3 md:py-4 text-center font-medium transition-colors text-sm md:text-base ${
               activeTab === 'history'
                 ? 'text-indigo-600 border-b-2 border-indigo-600'
                 : 'text-gray-500 hover:text-gray-700'
@@ -153,13 +153,13 @@ const QRScanner = () => {
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 md:p-6 flex-1 overflow-y-auto">
           {activeTab === 'scan' ? (
-            <div className="flex flex-col items-center max-w-md mx-auto">
+            <div className="flex flex-col items-center max-w-md mx-auto h-full justify-center">
               
               {/* Scanner View */}
               {scanning && !lastScanned && !error ? (
-                <div className="w-full bg-black rounded-lg overflow-hidden relative">
+                <div className="w-full aspect-square md:aspect-auto md:h-[400px] bg-black rounded-lg overflow-hidden relative">
                   <QrScanner
                     delay={300}
                     style={previewStyle}
@@ -175,7 +175,7 @@ const QRScanner = () => {
                   </div>
                 </div>
               ) : (
-                <div className="w-full bg-gray-100 rounded-lg h-[300px] flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-full bg-gray-100 rounded-lg min-h-[300px] flex flex-col items-center justify-center p-6 text-center">
                   {lastScanned ? (
                     <div className="animate-in fade-in zoom-in duration-300">
                       <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />

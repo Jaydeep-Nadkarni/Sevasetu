@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { MapView } from '../../components/Map/MapView'
 import api from '../../utils/api'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 const NearbyMap = () => {
   const [activeTab, setActiveTab] = useState('ngos') // ngos, events, help-requests
@@ -84,16 +84,16 @@ const NearbyMap = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-64px)] flex flex-col">
-      {/* Controls Header */}
-      <div className="bg-white shadow-md p-4 z-10">
-        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="h-[calc(100vh-64px)] flex flex-col relative">
+      {/* Controls Header - Collapsible on mobile could be better, but for now compacting it */}
+      <div className="bg-white shadow-md p-2 md:p-4 z-10 shrink-0">
+        <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
           
-          {/* Tabs */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          {/* Tabs - Scrollable on mobile */}
+          <div className="flex bg-gray-100 rounded-lg p-1 w-full md:w-auto overflow-x-auto no-scrollbar">
             <button
               onClick={() => handleTabChange('ngos')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 md:flex-none px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'ngos'
                   ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -103,7 +103,7 @@ const NearbyMap = () => {
             </button>
             <button
               onClick={() => handleTabChange('events')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 md:flex-none px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'events'
                   ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -113,7 +113,7 @@ const NearbyMap = () => {
             </button>
             <button
               onClick={() => handleTabChange('help-requests')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 md:flex-none px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === 'help-requests'
                   ? 'bg-white text-primary shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
@@ -124,8 +124,8 @@ const NearbyMap = () => {
           </div>
 
           {/* Radius Slider */}
-          <div className="flex items-center gap-4 w-full md:w-auto">
-            <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+          <div className="flex items-center gap-3 w-full md:w-auto px-2 md:px-0">
+            <span className="text-sm font-medium text-gray-700 whitespace-nowrap min-w-[80px]">
               Radius: {radius} km
             </span>
             <input
@@ -140,8 +140,8 @@ const NearbyMap = () => {
         </div>
       </div>
 
-      {/* Map Container */}
-      <div className="flex-1 relative">
+      {/* Map Container - Takes remaining height */}
+      <div className="flex-1 relative w-full h-full overflow-hidden">
         {loading && (
           <div className="absolute inset-0 bg-white/50 z-20 flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>

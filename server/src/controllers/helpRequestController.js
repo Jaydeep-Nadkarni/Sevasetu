@@ -1,6 +1,7 @@
 import HelpRequest from '../models/HelpRequest.js'
 import NGO from '../models/NGO.js'
 import cloudinary from '../config/cloudinary.js'
+import { sendNotification } from '../services/notificationService.js'
 
 // === CREATE HELP REQUEST ===
 export const createHelpRequest = async (req, res) => {
@@ -217,9 +218,23 @@ export const claimHelpRequest = async (req, res) => {
     // Notify requester
     const io = req.app.get('io')
     if (io) {
-      io.to(`user:${helpRequest.requester}`).emit('help_request:claimed', {
+      await sendNotification(io, {
+        recipientId: helpRequest.requester,
+        type: 'help_request_update',
+        title: 'Help Request Claimed',
         message: `Your request "${helpRequest.title}" has been claimed by ${ngo.name}`,
-        helpRequest,
+        data: {
+          requestId: helpRequest._id,
+          ngoId: ngo._id,
+          status: 'in_progress'
+        },
+        emailTemplate: 'help_request_update',
+        emailData: {
+          requestTitle: helpRequest.title,
+          status: 'In Progress',
+          message: `${ngo.name} has claimed your request and will be in touch shortly.`,
+          dashboardUrl: `${process.env.CLIENT_URL}/dashboard`
+        }
       })
     }
 
@@ -324,9 +339,42 @@ export const updateStatus = async (req, res) => {
     const io = req.app.get('io')
     if (io) {
       const msg = `Help request "${helpRequest.title}" marked as ${status}`
-      io.to(`user:${helpRequest.requester}`).emit('help_request:status', { message: msg, helpRequest })
+      
+      // Notify requester
+      await sendNotification(io, {
+        recipientId: helpRequest.requester,
+        type: 'help_request_update',
+        title: 'Status Updated',
+        message: msg,
+        data: {
+          requestId: helpRequest._id,
+          status
+        },
+        emailTemplate: 'help_request_update',
+        emailData: {
+          requestTitle: helpRequest.title,
+          status: status,
+          message: `The status of your help request has been updated to ${status}.`,
+          dashboardUrl: `${process.env.CLIENT_URL}/dashboard`
+        }
+      })
+
+      // Notify assigned NGO if exists and status changed by requester
       if (helpRequest.assignedNGO) {
-        io.to(`ngo:${helpRequest.assignedNGO}`).emit('help_request:status', { message: msg, helpRequest })
+        // Find NGO admin
+        const assignedNGO = await NGO.findById(helpRequest.assignedNGO)
+        if (assignedNGO && assignedNGO.admin) {
+             await sendNotification(io, {
+                recipientId: assignedNGO.admin,
+                type: 'help_request_update',
+                title: 'Status Updated',
+                message: msg,
+                data: {
+                  requestId: helpRequest._id,
+                  status
+                }
+              })
+        }
       }
     }
 

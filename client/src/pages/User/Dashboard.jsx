@@ -5,6 +5,7 @@ import { Sidebar } from '../../components/Sidebar'
 import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
+import RecommendationWidget from '../../components/Recommendations/RecommendationWidget'
 
 const StatCard = ({ icon, label, value, change, isDark }) => {
   return (
@@ -60,7 +61,6 @@ const RecentActivityItem = ({ type, description, time, isDark }) => {
 export const Dashboard = () => {
   const { isDark } = useTheme()
   const { user } = useAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const stats = [
     { icon: '❤️', label: 'Total Donations', value: '₹12,500', change: 15 },
@@ -88,145 +88,132 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className={`flex h-screen ${isDark ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <motion.div
+      className="max-w-7xl mx-auto"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-8"
+      >
+        <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
+          Welcome back, {user?.firstName}! 👋
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Here's what's happening with your account
+        </p>
+      </motion.div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Menu Button */}
-        <div className="md:hidden p-4 flex items-center gap-4">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-200'}`}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
+      {/* Stats Grid */}
+      <motion.div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        variants={containerVariants}
+      >
+        {stats.map((stat, index) => (
+          <StatCard key={index} {...stat} isDark={isDark} />
+        ))}
+      </motion.div>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto">
-          <motion.div
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {/* Header */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8"
-            >
-              <h1 className="text-4xl font-bold mb-2">
-                Welcome back, {user?.firstName}! 👋
-              </h1>
-              <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Here's what's happening with your account
-              </p>
-            </motion.div>
+      {/* Recommendations */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.15 }}
+        className="mb-8"
+      >
+        <RecommendationWidget type="all" title="Recommended for You" />
+      </motion.div>
 
-            {/* Stats Grid */}
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-              variants={containerVariants}
-            >
-              {stats.map((stat, index) => (
-                <StatCard key={index} {...stat} isDark={isDark} />
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card header="Quick Actions">
+            <div className="space-y-3">
+              <Button variant="primary" className="w-full justify-center">
+                💝 Make a Donation
+              </Button>
+              <Button variant="secondary" className="w-full justify-center">
+                🎯 Find Opportunities
+              </Button>
+              <Button variant="outline" className="w-full justify-center">
+                📋 View Applications
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Recent Activity */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
+          className="lg:col-span-2"
+        >
+          <Card header="Recent Activity">
+            <div className="space-y-2">
+              {recentActivity.map((activity, index) => (
+                <RecentActivityItem key={index} {...activity} isDark={isDark} />
               ))}
-            </motion.div>
-
-            {/* Main Content Area */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Quick Actions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <Card header="Quick Actions">
-                  <div className="space-y-3">
-                    <Button variant="primary" className="w-full justify-center">
-                      💝 Make a Donation
-                    </Button>
-                    <Button variant="secondary" className="w-full justify-center">
-                      🎯 Find Opportunities
-                    </Button>
-                    <Button variant="outline" className="w-full justify-center">
-                      📋 View Applications
-                    </Button>
-                  </div>
-                </Card>
-              </motion.div>
-
-              {/* Recent Activity */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-                className="lg:col-span-2"
-              >
-                <Card header="Recent Activity">
-                  <div className="space-y-2">
-                    {recentActivity.map((activity, index) => (
-                      <RecentActivityItem key={index} {...activity} isDark={isDark} />
-                    ))}
-                  </div>
-                </Card>
-              </motion.div>
             </div>
-
-            {/* Additional Sections */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-              {/* Upcoming Events */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                <Card header="Upcoming Events">
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}
-                      >
-                        <p className="font-medium">Community Service Event</p>
-                        <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                          Dec {10 + i}, 2025 • 2:00 PM
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </motion.div>
-
-              {/* Badges */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.5 }}
-              >
-                <Card header="Badges Earned">
-                  <div className="grid grid-cols-4 gap-4">
-                    {['🌟', '❤️', '🏆', '🎯', '🌱', '💪', '🎉', '✨'].map(
-                      (badge, i) => (
-                        <div key={i} className="text-center">
-                          <div className="text-4xl mb-2">{badge}</div>
-                          <p className="text-xs text-center">Badge</p>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
-        </main>
+          </Card>
+        </motion.div>
       </div>
-    </div>
+
+      {/* Additional Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+        {/* Upcoming Events */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.4 }}
+        >
+          <Card header="Upcoming Events">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className={`p-3 rounded-lg ${isDark ? 'bg-gray-700' : 'bg-gray-100'}`}
+                >
+                  <p className="font-medium text-gray-900 dark:text-white">Community Service Event</p>
+                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Dec {10 + i}, 2025 • 2:00 PM
+                  </p>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+
+        {/* Badges */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.5 }}
+        >
+          <Card header="Badges Earned">
+            <div className="grid grid-cols-4 gap-4">
+              {['🌟', '❤️', '🏆', '🎯', '🌱', '💪', '🎉', '✨'].map(
+                (badge, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-4xl mb-2">{badge}</div>
+                    <p className="text-xs text-center text-gray-600 dark:text-gray-400">Badge</p>
+                  </div>
+                )
+              )}
+            </div>
+          </Card>
+        </motion.div>
+      </div>
+    </motion.div>
   )
 }
