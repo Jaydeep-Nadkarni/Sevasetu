@@ -11,7 +11,6 @@ const certificateSchema = new mongoose.Schema(
     issuer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'NGO',
-      required: [true, 'Issuer NGO is required'],
       index: true,
     },
     type: {

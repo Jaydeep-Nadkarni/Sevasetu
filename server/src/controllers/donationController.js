@@ -2,6 +2,7 @@ import ItemDonation from '../models/ItemDonation.js'
 import NGO from '../models/NGO.js'
 import { uploadImage, deleteImage } from '../config/cloudinary.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
+import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
 
 /**
  * Create new item donation with automatic NGO assignment
@@ -455,6 +456,15 @@ export const completePickup = asyncHandler(async (req, res) => {
     // Mark as completed
     await donation.markCompleted(userNGO._id)
 
+    // Award points to donor
+    let pointsType = 'essentials'
+    const category = donation.items.category.toLowerCase()
+    if (category.includes('food')) pointsType = 'food'
+    else if (category.includes('cloth')) pointsType = 'clothes'
+    
+    const points = calculateDonationPoints(pointsType, donation.items.quantity)
+    const pointsResult = await addPoints(donation.donor, points, 'donation')
+
     // Emit Socket.IO event to donor's personal room
     const io = req.app.get('io')
     const donorId = donation.donor.toString()
@@ -463,6 +473,9 @@ export const completePickup = asyncHandler(async (req, res) => {
       donationId: donation._id,
       donorId,
       ngoId: userNGO._id,
+      pointsEarned: points,
+      levelUp: pointsResult.levelUp,
+      newLevel: pointsResult.newLevel
     })
 
     // Also broadcast to all connected clients
