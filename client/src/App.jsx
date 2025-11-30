@@ -23,6 +23,8 @@ import Progress from './pages/User/Progress'
 import Leaderboard from './pages/Leaderboard'
 import Certificates from './pages/User/Certificates'
 import CertificateVerify from './pages/CertificateVerify'
+import DonateMoney from './pages/User/DonateMoney'
+import TransactionHistory from './pages/User/TransactionHistory'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
@@ -134,6 +136,29 @@ function App() {
         <Route
           path="/verify-certificate/:code"
           element={<CertificateVerify />}
+        />
+
+        {/* Financial Routes */}
+        <Route
+          path="/donate-money"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <DashboardLayout>
+                <DonateMoney />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <DashboardLayout>
+                <TransactionHistory />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
         />
 
         {/* User Donation Routes */}
