@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Login } from './pages/Auth/Login'
 import { Register } from './pages/Auth/Register'
+import { RegisterUser } from './pages/Auth/RegisterUser'
+import { RegisterNGO } from './pages/Auth/RegisterNGO'
 import { Unauthorized } from './pages/Auth/Unauthorized'
 import Landing from './pages/Landing'
 import { Dashboard } from './pages/User/Dashboard'
@@ -70,7 +72,8 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<RegisterUser />} />
+        <Route path="/register-ngo" element={<RegisterNGO />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* Home Route - Landing Page for Unauthenticated Users */}
