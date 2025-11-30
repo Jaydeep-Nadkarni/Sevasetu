@@ -1,5 +1,6 @@
 import { uploadImage, deleteImage, getOptimizedImageUrl } from '../config/cloudinary.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
+import { optimizeImage } from '../utils/imageOptimizer.js'
 
 /**
  * Upload single image to Cloudinary
@@ -21,8 +22,23 @@ export const uploadImage_handler = asyncHandler(async (req, res) => {
       resourceType: fileType === 'video' ? 'video' : 'image',
     }
 
+    let fileBuffer = req.file.buffer
+
+    // Optimize image locally before upload if it's an image
+    if (fileType === 'image' && req.file.mimetype.startsWith('image/')) {
+      try {
+        fileBuffer = await optimizeImage(req.file.buffer, {
+          width: parseInt(width),
+          quality: parseInt(quality),
+          format: 'webp', // Convert to WebP for better compression
+        })
+      } catch (optError) {
+        console.warn('Local optimization failed, proceeding with original file:', optError)
+      }
+    }
+
     // Upload to Cloudinary
-    const result = await uploadImage(req.file.buffer, uploadOptions)
+    const result = await uploadImage(fileBuffer, uploadOptions)
 
     // Return success response with image details
     successResponse(
@@ -69,7 +85,22 @@ export const uploadImages_handler = asyncHandler(async (req, res) => {
           resourceType: fileType === 'video' ? 'video' : 'image',
         }
 
-        const result = await uploadImage(file.buffer, uploadOptions)
+        let fileBuffer = file.buffer
+
+        // Optimize image locally before upload if it's an image
+        if (fileType === 'image' && file.mimetype.startsWith('image/')) {
+          try {
+            fileBuffer = await optimizeImage(file.buffer, {
+              width: parseInt(width),
+              quality: parseInt(quality),
+              format: 'webp',
+            })
+          } catch (optError) {
+            console.warn('Local optimization failed, proceeding with original file:', optError)
+          }
+        }
+
+        const result = await uploadImage(fileBuffer, uploadOptions)
         uploadResults.push({
           publicId: result.public_id,
           url: result.secure_url,
