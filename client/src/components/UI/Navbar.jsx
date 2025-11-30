@@ -143,6 +143,24 @@ export const Navbar = () => {
                     </button>
                     <button
                       onClick={() => {
+                        navigate('/donate-money')
+                        setIsUserMenuOpen(false)
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      Donate Money
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/transactions')
+                        setIsUserMenuOpen(false)
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      Transaction History
+                    </button>
+                    <button
+                      onClick={() => {
                         navigate('/settings')
                         setIsUserMenuOpen(false)
                       }}
@@ -243,6 +261,24 @@ export const Navbar = () => {
                   className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                 >
                   Leaderboard
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/donate-money')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  Donate Money
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/transactions')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  Transaction History
                 </button>
                 <button
                   onClick={() => {
