@@ -16,23 +16,21 @@ const DonationHistory = () => {
   const [cancellingId, setCancellingId] = useState(null)
 
   // Fetch donations with React Query
-  const { data: donations = [], isLoading, refetch } = useQuery(
-    ['my-donations'],
-    async () => {
+  const { data: donations = [], isLoading, refetch } = useQuery({
+    queryKey: ['my-donations'],
+    queryFn: async () => {
       const response = await api.get('/donations/my')
       return response.data.donations || response.data
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      onError: (error) => {
-        dispatch(showNotification({
-          message: error.response?.data?.message || '❌ Failed to fetch donations',
-          type: 'error',
-        }))
-      }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    onError: (error) => {
+      dispatch(showNotification({
+        message: error.response?.data?.message || '❌ Failed to fetch donations',
+        type: 'error',
+      }))
     }
-  )
+  })
 
   // Socket.IO listeners for real-time updates
   useEffect(() => {

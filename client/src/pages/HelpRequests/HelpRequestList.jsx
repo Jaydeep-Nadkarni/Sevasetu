@@ -23,9 +23,9 @@ const HelpRequestList = () => {
   })
 
   // Fetch help requests with React Query
-  const { data, isLoading, refetch } = useQuery(
-    ['help-requests', { ...filters, page }],
-    async () => {
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['help-requests', { ...filters, page }],
+    queryFn: async () => {
       const params = {
         page,
         limit: 9,
@@ -40,11 +40,9 @@ const HelpRequestList = () => {
       setPagination(data.pagination)
       return data.helpRequests
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-    }
-  )
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  })
 
   const requests = data || []
 
