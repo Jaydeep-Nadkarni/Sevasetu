@@ -1,6 +1,7 @@
 import { verifyToken } from '../utils/jwt.js'
+import { User } from '../models/index.js'
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1]
 
@@ -19,7 +20,23 @@ export const authenticate = (req, res, next) => {
       })
     }
 
-    req.user = decoded
+    // Fetch full user object from database
+    const user = await User.findById(decoded.id)
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User no longer exists',
+      })
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'User account is deactivated',
+      })
+    }
+
+    req.user = user
     next()
   } catch (error) {
     res.status(401).json({
