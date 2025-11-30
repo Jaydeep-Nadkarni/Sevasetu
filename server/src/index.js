@@ -14,6 +14,7 @@ import helpRequestRoutes from './routes/helpRequestRoutes.js'
 import ngoRoutes from './routes/ngoRoutes.js'
 import certificateRoutes from './routes/certificateRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js'
+import chatRoutes from './routes/chatRoutes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -96,6 +97,9 @@ app.use('/api/certificates', certificateRoutes)
 
 // Payment routes
 app.use('/api/payment', paymentRoutes)
+
+// Chat routes
+app.use('/api/chat', chatRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {

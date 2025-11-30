@@ -25,6 +25,7 @@ import Certificates from './pages/User/Certificates'
 import CertificateVerify from './pages/CertificateVerify'
 import DonateMoney from './pages/User/DonateMoney'
 import TransactionHistory from './pages/User/TransactionHistory'
+import ChatWidget from './components/Chatbot/ChatWidget'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
@@ -45,10 +46,13 @@ function App() {
     <Router>
       {/* Notifications Component */}
       {isAuthenticated && user && (
-        <Notifications 
-          userId={user._id} 
-          userType={user.role === 'ngo_admin' ? 'ngo' : 'donor'} 
-        />
+        <>
+          <Notifications 
+            userId={user._id} 
+            userType={user.role === 'ngo_admin' ? 'ngo' : 'donor'} 
+          />
+          <ChatWidget />
+        </>
       )}
       <Routes>
         {/* Public Routes */}
