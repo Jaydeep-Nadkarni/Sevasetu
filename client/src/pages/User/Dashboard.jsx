@@ -5,6 +5,7 @@ import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { Heart, Zap, MapPin } from 'lucide-react'
 import RecommendationWidget from '../../components/Recommendations/RecommendationWidget'
 import { RecentActivity } from '../../components/RecentActivity'
 import api from '../../utils/api'
@@ -65,7 +66,7 @@ export const Dashboard = () => {
         transition={{ duration: 0.3 }}
       >
         <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-          Welcome back, {user?.firstName}! 👋
+          Welcome back, {user?.firstName}!
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Here's a quick overview of your impact and opportunities
@@ -80,20 +81,23 @@ export const Dashboard = () => {
               onClick={() => navigate('/donate-money')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
             >
-              💝 Make a Donation
+              <Heart className="w-5 h-5" />
+              Make a Donation
             </Button>
             <Button 
               onClick={() => navigate('/events')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
             >
-              🎯 Find Events
+              <Zap className="w-5 h-5" />
+              Find Events
             </Button>
             <Button 
               onClick={() => navigate('/map')}
               variant="outline"
               className="w-full justify-center gap-2"
             >
-              📍 Nearby NGOs
+              <MapPin className="w-5 h-5" />
+              Nearby NGOs
             </Button>
           </div>
         </Card>

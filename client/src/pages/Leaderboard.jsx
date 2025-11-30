@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Trophy, Medal, Crown } from 'lucide-react'
 import { useSocket } from '../context/SocketContext'
 import api from '../utils/api'

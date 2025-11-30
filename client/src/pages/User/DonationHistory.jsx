@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import { showNotification } from '../../store/slices/notificationSlice'
 import { useSocket } from '../../context/SocketContext'
 import api from '../../utils/api'

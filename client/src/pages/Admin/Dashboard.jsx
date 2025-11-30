@@ -4,6 +4,7 @@ import { Card } from '../../components/UI/Card'
 import { Button } from '../../components/UI/Button'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { CheckCircle, Users, BarChart3, Calendar } from 'lucide-react'
 import { RecentActivity } from '../../components/RecentActivity'
 
 export const AdminDashboard = () => {
@@ -44,7 +45,7 @@ export const AdminDashboard = () => {
         transition={{ duration: 0.3 }}
       >
         <h1 className="text-4xl font-bold mb-2 text-gray-900 dark:text-white">
-          Admin Dashboard 🎛️
+          Admin Dashboard
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
           Manage platform operations and approvals
@@ -59,19 +60,22 @@ export const AdminDashboard = () => {
               onClick={() => navigate('/admin/ngo-verification')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600"
             >
-              ✅ NGO Verification
+              <CheckCircle className="w-5 h-5" />
+              NGO Verification
             </Button>
             <Button 
               onClick={() => navigate('/admin/users')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
             >
-              👥 User Management
+              <Users className="w-5 h-5" />
+              User Management
             </Button>
             <Button 
               onClick={() => navigate('/admin/analytics')}
               className="w-full justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
             >
-              📊 Analytics
+              <BarChart3 className="w-5 h-5" />
+              Analytics
             </Button>
           </div>
         </Card>
@@ -86,7 +90,8 @@ export const AdminDashboard = () => {
               {/* Pending NGO Approvals */}
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <span>🏢</span> NGO Verification Pending
+                  <CheckCircle className="w-5 h-5" />
+                  NGO Verification Pending
                 </h4>
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
@@ -114,7 +119,8 @@ export const AdminDashboard = () => {
               {/* Pending Event Approvals */}
               <div className={`pt-4 border-t ${isDark ? 'border-gray-600' : 'border-gray-200'}`}>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <span>🎉</span> Event Approvals Pending
+                  <Calendar className="w-5 h-5" />
+                  Event Approvals Pending
                 </h4>
                 <div className="space-y-2">
                   {[1, 2].map((i) => (

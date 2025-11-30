@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Moon, Sun, User, LogOut, Menu, TrendingUp } from 'lucide-react'
-import { logoutUser } from '../../store/slices/authSlice'
-import { useTheme } from '../../context/ThemeContext'
+import { logoutUser } from '../store/slices/authSlice.js'
+import { useTheme } from '../context/ThemeContext'
 
 const MinimalNavbar = ({ onMenuClick }) => {
   const navigate = useNavigate()

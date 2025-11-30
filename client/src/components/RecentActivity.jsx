@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useTheme } from '../context/ThemeContext'
 import { useSocket } from '../context/SocketContext'
 import { Card } from './UI/Card'
@@ -179,12 +180,12 @@ export const RecentActivity = ({ userId = null, limit = 10, className = '' }) =>
 
       {activities.length > 0 && (
         <div className={`mt-4 pt-4 border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <a 
-            href="/activity-log"
+          <Link 
+            to="/activity-log"
             className="text-sm text-primary hover:text-primary-dark font-medium transition"
           >
             View all activities →
-          </a>
+          </Link>
         </div>
       )}
     </Card>

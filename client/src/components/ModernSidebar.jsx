@@ -13,7 +13,6 @@ import {
   Award,
   Settings,
   HelpCircle,
-  Menu,
   X,
   ChevronLeft,
   ChevronRight,

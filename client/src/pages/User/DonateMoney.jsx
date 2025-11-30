@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Heart, Shield, CreditCard, AlertCircle, CheckCircle, Zap } from 'lucide-react'
+import { Heart, Shield, CreditCard, CheckCircle, Zap } from 'lucide-react'
 import api from '../../utils/api'
 import { loadRazorpay } from '../../utils/razorpay'
 import { toast } from 'react-hot-toast'
@@ -184,11 +184,6 @@ const DonateMoney = () => {
     }
   }
 
-  const getNGOName = (ngoId) => {
-    if (!ngoId) return 'SevaSetu Platform'
-    return ngos.find(n => n._id === ngoId)?.name || 'Unknown NGO'
-  }
-
   return (
     <>
       {/* Success Modal */}
@@ -346,7 +341,7 @@ const DonateMoney = () => {
                   id="anonymous"
                   type="checkbox"
                   checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.checked)}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
                 <label htmlFor="anonymous" className="ml-2 block text-sm text-gray-900">

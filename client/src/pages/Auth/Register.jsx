@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.js'
 
 const NGO_CATEGORIES = [
@@ -15,8 +15,20 @@ const NGO_CATEGORIES = [
 
 export const Register = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { register, registerNGO, isLoading, error, clearError } = useAuth()
   const [selectedRole, setSelectedRole] = useState('user')
+
+  // Initialize role from query parameter on mount
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const roleParam = searchParams.get('role')
+    if (roleParam === 'ngo') {
+      setSelectedRole('ngo')
+    } else {
+      setSelectedRole('user')
+    }
+  }, [location.search])
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -89,19 +101,12 @@ export const Register = () => {
     
     const validationError = validateForm()
     if (validationError) {
-      console.error('Validation error:', validationError)
       return
     }
 
     try {
       let result
       if (selectedRole === 'user') {
-        console.log('Registering user with data:', {
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-        })
         result = await register({
           email: formData.email,
           password: formData.password,
@@ -111,12 +116,6 @@ export const Register = () => {
           role: 'user',
         })
       } else {
-        console.log('Registering NGO with data:', {
-          email: formData.email,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          ngo: formData.ngo,
-        })
         result = await registerNGO({
           email: formData.email,
           password: formData.password,
@@ -127,12 +126,9 @@ export const Register = () => {
         })
       }
 
-      console.log('Registration result:', result)
-
       // Check if registration was successful
       if (result.type.endsWith('/fulfilled')) {
         const role = result.payload?.user?.role
-        console.log('Registration successful, role:', role)
         if (role === 'user') {
           navigate('/user/dashboard')
         } else if (role === 'ngo_admin') {
@@ -143,10 +139,10 @@ export const Register = () => {
           navigate('/user/dashboard')
         }
       } else if (result.type.endsWith('/rejected')) {
-        console.error('Registration rejected:', result.payload)
+        // Handle registration error
       }
     } catch (err) {
-      console.error('Registration error:', err)
+      // Handle error
     }
   }
 
