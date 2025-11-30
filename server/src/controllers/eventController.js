@@ -3,6 +3,7 @@ import QRAttendance from '../models/QRAttendance.js'
 import NGO from '../models/NGO.js'
 import cloudinary from '../config/cloudinary.js'
 import QRCode from 'qrcode'
+import { sendNotification } from '../services/notificationService.js'
 
 // === CREATE EVENT ===
 export const createEvent = async (req, res) => {
@@ -421,6 +422,7 @@ export const joinEvent = async (req, res) => {
     // Emit Socket.IO notification
     const io = req.app.get('io')
     if (io) {
+      // Real-time update to event room (for live counters etc)
       io.to(`event:${id}`).emit('event:user_joined', {
         message: `A new user has registered for "${event.title}"`,
         userId,
@@ -428,11 +430,16 @@ export const joinEvent = async (req, res) => {
         attendeeCount: event.registeredCount,
       })
 
-      // Notify event creator
-      io.to(`user:${event.createdBy}`).emit('event:new_registration', {
+      // Persistent notification to event creator
+      await sendNotification(io, {
+        recipientId: event.createdBy,
+        type: 'event_registration',
+        title: 'New Event Registration',
         message: `New registration for your event "${event.title}"`,
-        eventId: id,
-        attendeeCount: event.registeredCount,
+        data: {
+          eventId: id,
+          attendeeCount: event.registeredCount
+        }
       })
     }
 
@@ -632,15 +639,21 @@ export const approveEvent = async (req, res) => {
 
     await event.save()
 
-    // Emit Socket.IO notification to event creator
+    // Send notification to event creator
     const io = req.app.get('io')
     if (io) {
-      io.to(`user:${event.createdBy}`).emit('event:approval_status', {
+      await sendNotification(io, {
+        recipientId: event.createdBy,
+        type: 'admin_approval',
+        title: isApproved ? 'Event Approved' : 'Event Rejected',
         message: isApproved
           ? `Your event "${event.title}" has been approved!`
           : `Your event "${event.title}" has been rejected. Reason: ${rejectionReason}`,
-        event,
-        status: event.status,
+        data: {
+          eventId: event._id,
+          status: event.status,
+          rejectionReason
+        }
       })
     }
 

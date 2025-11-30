@@ -8,6 +8,7 @@ import NGO from '../models/NGO.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
 import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
 import { sendEmail } from '../utils/email.js'
+import { sendNotification } from '../services/notificationService.js'
 
 // @desc    Create Razorpay Order
 // @route   POST /api/payment/create-order
@@ -155,6 +156,22 @@ export const verifyPayment = asyncHandler(async (req, res) => {
     
     // Don't await email to speed up response
     sendEmail(user.email, emailSubject, emailBody).catch(console.error)
+
+    // 5. Send Notification
+    const io = req.app.get('io')
+    if (io) {
+        await sendNotification(io, {
+            recipientId: req.user._id,
+            type: 'donation_update',
+            title: 'Payment Successful',
+            message: `Thank you! Your donation of ${transaction.currency} ${transaction.amount} was successful.`,
+            data: {
+                transactionId: transaction._id,
+                donationId: donation._id,
+                pointsEarned: points
+            }
+        })
+    }
 
     successResponse(res, {
       transaction,

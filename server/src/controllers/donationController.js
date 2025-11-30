@@ -3,6 +3,7 @@ import NGO from '../models/NGO.js'
 import { uploadImage, deleteImage } from '../config/cloudinary.js'
 import { asyncHandler, successResponse, errorResponse } from '../utils/helpers.js'
 import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
+import { sendNotification } from '../services/notificationService.js'
 
 /**
  * Create new item donation with automatic NGO assignment
@@ -343,23 +344,19 @@ export const acceptDonation = asyncHandler(async (req, res) => {
 
     await donation.save()
 
-    // Emit Socket.IO event to donor's personal room
+    // Send notification to donor
     const io = req.app.get('io')
-    const donorId = donation.donor.toString()
-    
-    io.to(`user:${donorId}`).emit('donation:accepted', {
-      donationId: donation._id,
-      donorId,
-      ngoId: userNGO._id,
-      ngoName: userNGO.name,
-    })
-
-    // Also broadcast to all connected clients
-    io.emit('donation:accepted', {
-      donationId: donation._id,
-      donorId,
-      ngoId: userNGO._id,
-      ngoName: userNGO.name,
+    await sendNotification(io, {
+      recipientId: donation.donor,
+      type: 'donation_update',
+      title: 'Donation Accepted',
+      message: `Your donation has been accepted by ${userNGO.name}`,
+      data: {
+        donationId: donation._id,
+        ngoId: userNGO._id,
+        ngoName: userNGO.name,
+        status: 'accepted'
+      }
     })
 
     await donation.populate([
@@ -465,24 +462,21 @@ export const completePickup = asyncHandler(async (req, res) => {
     const points = calculateDonationPoints(pointsType, donation.items.quantity)
     const pointsResult = await addPoints(donation.donor, points, 'donation')
 
-    // Emit Socket.IO event to donor's personal room
+    // Send notification to donor
     const io = req.app.get('io')
-    const donorId = donation.donor.toString()
-    
-    io.to(`user:${donorId}`).emit('donation:completed', {
-      donationId: donation._id,
-      donorId,
-      ngoId: userNGO._id,
-      pointsEarned: points,
-      levelUp: pointsResult.levelUp,
-      newLevel: pointsResult.newLevel
-    })
-
-    // Also broadcast to all connected clients
-    io.emit('donation:completed', {
-      donationId: donation._id,
-      donorId,
-      ngoId: userNGO._id,
+    await sendNotification(io, {
+      recipientId: donation.donor,
+      type: 'donation_update',
+      title: 'Donation Completed',
+      message: `Your donation pickup is complete! You earned ${points} points.`,
+      data: {
+        donationId: donation._id,
+        ngoId: userNGO._id,
+        pointsEarned: points,
+        levelUp: pointsResult.levelUp,
+        newLevel: pointsResult.newLevel,
+        status: 'completed'
+      }
     })
 
     await donation.populate([
@@ -635,26 +629,31 @@ export const cancelDonation = asyncHandler(async (req, res) => {
 
     await donation.save()
 
-    // Emit event to all assigned NGOs and donor
-    const io = req.app.get('io')
-    const donorId = donation.donor.toString()
-    
-    // Notify donor
-    io.to(`user:${donorId}`).emit('donation:cancelled', {
-      donationId: donation._id,
-    })
-
     // Notify assigned NGOs
-    donation.assignedNGOs.forEach(assignment => {
-      io.to(`ngo:${assignment.ngo}`).emit('donation:cancelled', {
-        donationId: donation._id,
-      })
-    })
-
-    // Broadcast to all
-    io.emit('donation:cancelled', {
-      donationId: donation._id,
-    })
+    const io = req.app.get('io')
+    
+    // We need to notify each assigned NGO
+    for (const assignment of donation.assignedNGOs) {
+      // We need to find the admin user ID for this NGO to send a notification
+      // This might require an extra query if we don't have the admin ID handy
+      // For now, we'll emit to the NGO room directly via socket if we can't find the user
+      // But sendNotification expects a recipientId (user ID).
+      
+      // Let's look up the NGO to get the admin ID
+      const ngo = await NGO.findById(assignment.ngo)
+      if (ngo && ngo.admin) {
+        await sendNotification(io, {
+          recipientId: ngo.admin,
+          type: 'donation_update',
+          title: 'Donation Cancelled',
+          message: 'A pending donation was cancelled by the donor',
+          data: {
+            donationId: donation._id,
+            status: 'cancelled'
+          }
+        })
+      }
+    }
 
     successResponse(res, donation, 'Donation cancelled')
   } catch (error) {

@@ -3,6 +3,7 @@ import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { Button } from './Button'
+import NotificationCenter from '../Notifications/NotificationCenter'
 
 export const Navbar = () => {
   const { isDark, toggleTheme } = useTheme()
@@ -59,6 +60,8 @@ export const Navbar = () => {
                 >
                   Dashboard
                 </button>
+                
+                <NotificationCenter />
                 
                 {/* Points Display */}
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-indigo-50 border-indigo-100'}`}>

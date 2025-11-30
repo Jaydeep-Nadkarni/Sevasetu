@@ -16,6 +16,7 @@ import certificateRoutes from './routes/certificateRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js'
 import chatRoutes from './routes/chatRoutes.js'
 import recommendationRoutes from './routes/recommendationRoutes.js'
+import notificationRoutes from './routes/notificationRoutes.js'
 
 const app = express()
 const httpServer = createServer(app)
@@ -104,6 +105,9 @@ app.use('/api/chat', chatRoutes)
 
 // Recommendation routes
 app.use('/api/recommendations', recommendationRoutes)
+
+// Notification routes
+app.use('/api/notifications', notificationRoutes)
 
 // Error handling middleware
 app.use((err, req, res, next) => {
