@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import axios from 'axios'
 import { motion } from 'framer-motion'
 import { MapPin, Calendar, Clock, Users, Upload, AlertCircle, CheckCircle } from 'lucide-react'
+import { LocationPicker } from '../../components/Map/LocationPicker'
 
 const CreateEvent = () => {
   const navigate = useNavigate()
@@ -71,27 +72,15 @@ const CreateEvent = () => {
     }
   }
 
-  const getCoordinates = async () => {
-    try {
-      if (!formData.location || !formData.city) {
-        setError('Please enter location and city')
-        return
-      }
-
-      const response = await axios.get(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${formData.location}, ${formData.city}`
-      )
-
-      if (response.data && response.data.length > 0) {
-        const { lat, lon } = response.data[0]
-        setCoordinates({ lat: parseFloat(lat), lng: parseFloat(lon) })
-        setError('')
-      } else {
-        setError('Location not found. Please try a different address.')
-      }
-    } catch (err) {
-      setError('Failed to fetch location coordinates')
-    }
+  const handleLocationSelect = (locationData) => {
+    setFormData(prev => ({
+      ...prev,
+      location: locationData.address,
+      city: locationData.city,
+      state: locationData.state,
+      zipcode: locationData.zipcode || '',
+    }))
+    setCoordinates({ lat: locationData.lat, lng: locationData.lng })
   }
 
   const handleSubmit = async (e) => {
@@ -117,11 +106,9 @@ const CreateEvent = () => {
 
       // Get coordinates if not already fetched
       if (!coordinates && !formData.isVirtual) {
-        await getCoordinates()
-        if (!coordinates) {
-          setLoading(false)
-          return
-        }
+        setError('Please select a location on the map')
+        setLoading(false)
+        return
       }
 
       const submitData = new FormData()
@@ -369,6 +356,13 @@ const CreateEvent = () => {
               </h3>
 
               <div className="space-y-4">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Search & Select Location <span className="text-red-500">*</span>
+                  </label>
+                  <LocationPicker onLocationSelect={handleLocationSelect} />
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -430,14 +424,6 @@ const CreateEvent = () => {
                     />
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={getCoordinates}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium"
-                >
-                  {coordinates ? '✓ Coordinates Found' : 'Get Coordinates'}
-                </button>
               </div>
 
               {/* Virtual Event Option */}

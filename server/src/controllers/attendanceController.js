@@ -2,10 +2,7 @@ import QRAttendance from '../models/QRAttendance.js'
 import Event from '../models/Event.js'
 import User from '../models/User.js'
 import { sendAttendanceConfirmation, sendLevelUpNotification } from '../utils/email.js'
-
-// Points configuration
-const POINTS_PER_EVENT = 10
-const POINTS_PER_LEVEL = 100
+import { addPoints, calculateDonationPoints } from '../utils/pointsSystem.js'
 
 // === MARK ATTENDANCE ===
 export const markAttendance = async (req, res) => {
@@ -64,28 +61,25 @@ export const markAttendance = async (req, res) => {
 
     // 6. Update User Points & Level
     const user = await User.findById(qrRecord.participant)
-    let levelUp = false
-    let oldLevel = user.level || 1
+    let pointsResult = { pointsAdded: 0, levelUp: false, newLevel: user?.level }
 
     if (user) {
-      user.points = (user.points || 0) + POINTS_PER_EVENT
+      // Calculate points
+      const points = calculateDonationPoints('event')
+      
+      // Add points and handle progression
+      pointsResult = await addPoints(user._id, points, 'event')
+      
+      // Update volunteer hours
       user.volunteerHours = (user.volunteerHours || 0) + (event.duration || 0)
-      
-      // Calculate new level
-      const newLevel = Math.floor(user.points / POINTS_PER_LEVEL) + 1
-      if (newLevel > oldLevel) {
-        user.level = newLevel
-        levelUp = true
-      }
-      
       await user.save()
     }
 
     // 7. Send Notifications (Async)
     if (user) {
-      sendAttendanceConfirmation(user, event, POINTS_PER_EVENT).catch(console.error)
-      if (levelUp) {
-        sendLevelUpNotification(user, user.level).catch(console.error)
+      sendAttendanceConfirmation(user, event, pointsResult.pointsAdded).catch(console.error)
+      if (pointsResult.levelUp) {
+        sendLevelUpNotification(user, pointsResult.newLevel).catch(console.error)
       }
     }
 
@@ -96,15 +90,17 @@ export const markAttendance = async (req, res) => {
         message: `Attendance marked for ${user ? user.name : 'User'}`,
         participantId: user._id,
         status: 'checked_in',
+        pointsEarned: pointsResult.pointsAdded,
+        levelUp: pointsResult.levelUp
       })
     }
 
     // Return success
     res.json({
       message: 'Attendance marked successfully',
-      pointsEarned: POINTS_PER_EVENT,
-      levelUp,
-      newLevel: user.level,
+      pointsEarned: pointsResult.pointsAdded,
+      levelUp: pointsResult.levelUp,
+      newLevel: pointsResult.newLevel,
       participant: {
         _id: user._id,
         name: user.name || `${user.firstName} ${user.lastName}`,

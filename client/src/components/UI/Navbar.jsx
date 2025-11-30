@@ -44,6 +44,13 @@ export const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-4">
+            <button
+              onClick={() => navigate('/map')}
+              className={`px-3 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+            >
+              Map
+            </button>
+
             {user && (
               <>
                 <button
@@ -52,6 +59,17 @@ export const Navbar = () => {
                 >
                   Dashboard
                 </button>
+                
+                {/* Points Display */}
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-indigo-50 border-indigo-100'}`}>
+                  <span className="text-yellow-500">★</span>
+                  <span className={`text-sm font-bold ${isDark ? 'text-gray-200' : 'text-indigo-900'}`}>
+                    {user.points || 0}
+                  </span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${isDark ? 'bg-gray-700 text-gray-300' : 'bg-white text-indigo-600'}`}>
+                    Lvl {user.level || 1}
+                  </span>
+                </div>
               </>
             )}
 
@@ -95,6 +113,24 @@ export const Navbar = () => {
                       className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                     >
                       Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/progress')
+                        setIsUserMenuOpen(false)
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      My Progress
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/leaderboard')
+                        setIsUserMenuOpen(false)
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm ${isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                    >
+                      Leaderboard
                     </button>
                     <button
                       onClick={() => {
@@ -151,6 +187,16 @@ export const Navbar = () => {
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className={`md:hidden pb-4 space-y-2 ${isDark ? 'border-t border-gray-800' : 'border-t border-gray-200'}`}>
+            <button
+              onClick={() => {
+                navigate('/map')
+                setIsMobileMenuOpen(false)
+              }}
+              className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+            >
+              Map
+            </button>
+
             {user && (
               <>
                 <button
@@ -161,6 +207,24 @@ export const Navbar = () => {
                   className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                 >
                   Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/progress')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  My Progress
+                </button>
+                <button
+                  onClick={() => {
+                    navigate('/leaderboard')
+                    setIsMobileMenuOpen(false)
+                  }}
+                  className={`block w-full text-left px-4 py-2 rounded-lg transition ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  Leaderboard
                 </button>
                 <button
                   onClick={() => {

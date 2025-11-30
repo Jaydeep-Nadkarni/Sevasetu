@@ -7,6 +7,7 @@ import { Input } from '../../components/UI/Input'
 import { Button } from '../../components/UI/Button'
 import { ImageUpload } from '../../components/ImageUpload'
 import { motion } from 'framer-motion'
+import { LocationPicker } from '../../components/Map/LocationPicker'
 
 export const Profile = () => {
   const { isDark } = useTheme()
@@ -38,6 +39,17 @@ export const Profile = () => {
         [name]: '',
       }))
     }
+  }
+
+  const handleLocationSelect = (locationData) => {
+    setFormData(prev => ({
+      ...prev,
+      city: locationData.city,
+      state: locationData.state,
+      // We might want to store address and coordinates too if the backend supports it for users/NGOs
+      address: locationData.address,
+      coordinates: { lat: locationData.lat, lng: locationData.lng }
+    }))
   }
 
   const validateForm = () => {
@@ -266,6 +278,14 @@ export const Profile = () => {
                     </div>
 
                     {/* Location Row */}
+                    {isEditing && (
+                      <div className="mb-4">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Update Location
+                        </label>
+                        <LocationPicker onLocationSelect={handleLocationSelect} />
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Input
                         label="City"

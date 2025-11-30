@@ -93,6 +93,9 @@ export const listHelpRequests = async (req, res) => {
       urgency,
       city,
       visibility,
+      lat,
+      lng,
+      radius,
       page = 1,
       limit = 10,
     } = req.query
@@ -115,6 +118,19 @@ export const listHelpRequests = async (req, res) => {
     if (status && status !== 'all') filter.status = status
     if (urgency && urgency !== 'all') filter.urgency = urgency
     if (city) filter['location.city'] = new RegExp(city, 'i')
+
+    // Geospatial filter
+    if (lat && lng && radius) {
+      filter['location.coordinates'] = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseFloat(radius) * 1000 // Convert km to meters
+        }
+      }
+    }
 
     const skip = (page - 1) * limit
     const total = await HelpRequest.countDocuments(filter)

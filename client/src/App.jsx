@@ -18,6 +18,9 @@ import CreateHelpRequest from './pages/User/CreateHelpRequest'
 import HelpRequestList from './pages/HelpRequests/HelpRequestList'
 import HelpRequestDetail from './pages/HelpRequests/HelpRequestDetail'
 import HelpRequestManagement from './pages/NGO/HelpRequestManagement'
+import NearbyMap from './pages/Map/NearbyMap'
+import Progress from './pages/User/Progress'
+import Leaderboard from './pages/Leaderboard'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardLayout } from './components/DashboardLayout'
 import Notifications from './components/Notifications'
@@ -91,6 +94,27 @@ function App() {
                 <Profile />
               </DashboardLayout>
             </ProtectedRoute>
+          }
+        />
+
+        {/* Gamification Routes */}
+        <Route
+          path="/progress"
+          element={
+            <ProtectedRoute allowedRoles={['user', 'ngo_admin', 'admin']}>
+              <DashboardLayout>
+                <Progress />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/leaderboard"
+          element={
+            <DashboardLayout>
+              <Leaderboard />
+            </DashboardLayout>
           }
         />
 
@@ -258,6 +282,15 @@ function App() {
                 </div>
               </DashboardLayout>
             </ProtectedRoute>
+          }
+        />
+
+                <Route
+          path="/map"
+          element={
+            <DashboardLayout>
+              <NearbyMap />
+            </DashboardLayout>
           }
         />
 

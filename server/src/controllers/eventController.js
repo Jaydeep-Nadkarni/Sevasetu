@@ -146,7 +146,7 @@ export const createEvent = async (req, res) => {
 // === LIST EVENTS WITH FILTERS ===
 export const listEvents = async (req, res) => {
   try {
-    const { category, city, status, startDate, endDate, search, page = 1, limit = 10 } = req.query
+    const { category, city, status, startDate, endDate, search, lat, lng, radius, page = 1, limit = 10 } = req.query
 
     let filter = {}
 
@@ -184,6 +184,19 @@ export const listEvents = async (req, res) => {
         { title: new RegExp(search, 'i') },
         { description: new RegExp(search, 'i') },
       ]
+    }
+
+    // Geospatial filter
+    if (lat && lng && radius) {
+      filter['coordinates'] = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(lng), parseFloat(lat)]
+          },
+          $maxDistance: parseFloat(radius) * 1000 // Convert km to meters
+        }
+      }
     }
 
     // Calculate pagination

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { Upload, MapPin, AlertCircle, Users, DollarSign, Calendar, Eye } from 'lucide-react'
 import api from '../../utils/api'
+import { LocationPicker } from '../../components/Map/LocationPicker'
 
 const CreateHelpRequest = () => {
   const navigate = useNavigate()
@@ -24,6 +25,16 @@ const CreateHelpRequest = () => {
     state: '',
     coordinates: { lat: '', lng: '' }
   })
+
+  const handleLocationSelect = (locationData) => {
+    setFormData(prev => ({
+      ...prev,
+      location: locationData.address,
+      city: locationData.city,
+      state: locationData.state,
+      coordinates: { lat: locationData.lat, lng: locationData.lng }
+    }))
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -222,6 +233,11 @@ const CreateHelpRequest = () => {
               <MapPin className="w-5 h-5 text-indigo-600" /> Location
             </h3>
             
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search & Select Location</label>
+              <LocationPicker onLocationSelect={handleLocationSelect} />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input
