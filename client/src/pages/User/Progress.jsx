@@ -10,21 +10,19 @@ const Progress = () => {
   const { socket, invalidateQueries } = useSocket()
 
   // Fetch progress with React Query
-  const { data: stats, isLoading, refetch } = useQuery(
-    ['progress'],
-    async () => {
+  const { data: stats, isLoading, refetch } = useQuery({
+    queryKey: ['progress'],
+    queryFn: async () => {
       const { data } = await api.get('/users/progress')
       return data.data
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      onError: (error) => {
-        console.error('Error fetching progress:', error)
-        toast.error('Failed to load progress')
-      }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    onError: (error) => {
+      console.error('Error fetching progress:', error)
+      toast.error('Failed to load progress')
     }
-  )
+  })
 
   // Socket.IO listeners for real-time points and badge updates
   useEffect(() => {

@@ -10,21 +10,19 @@ const Leaderboard = () => {
   const { socket, invalidateQueries } = useSocket()
 
   // Fetch leaderboard with React Query
-  const { data: users = [], isLoading, refetch } = useQuery(
-    ['leaderboard'],
-    async () => {
+  const { data: users = [], isLoading, refetch } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: async () => {
       const { data } = await api.get('/users/leaderboard?limit=50')
       return data.data
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      onError: (error) => {
-        console.error('Error fetching leaderboard:', error)
-        toast.error('Failed to load leaderboard')
-      }
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    onError: (error) => {
+      console.error('Error fetching leaderboard:', error)
+      toast.error('Failed to load leaderboard')
     }
-  )
+  })
 
   // Socket.IO listeners for real-time leaderboard updates
   useEffect(() => {

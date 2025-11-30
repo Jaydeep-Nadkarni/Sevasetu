@@ -56,9 +56,9 @@ const EventList = () => {
   }
 
   // Fetch events with React Query
-  const { data, isLoading, error, refetch } = useQuery(
-    buildQueryKey(),
-    async () => {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: buildQueryKey(),
+    queryFn: async () => {
       const params = new URLSearchParams({
         page,
         limit: 12,
@@ -74,11 +74,9 @@ const EventList = () => {
       setTotalPages(response.data.pagination?.total || 1)
       return response.data.events || []
     },
-    {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-    }
-  )
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  })
 
   const events = data || []
 
